@@ -1829,7 +1829,14 @@ async function joinLive(){
     SS.unsubs = [
       net.on(`${room}/state`, onStudentState),
       net.on(`${room}/scores`, onStudentScores),
-      net.on(`${room}/players/${net.uid}`, v => { if (SS.joined && v === null && !SS.ended) { SS.removed = true; leaveLive(); renderStudent(); } }),
+      net.on(`${room}/players/${net.uid}`, async v => {
+        if (!SS.joined || v !== null || SS.ended) return;
+        /* Our player entry vanished: either the teacher removed us, or the whole game was closed. */
+        let st = null; try { st = await net.get(`${room}/state`); } catch (e) {}
+        if (!SS.joined) return;
+        if (st) SS.removed = true; else SS.ended = true;
+        leaveLive(); renderStudent();
+      }),
     ];
   } catch (err) { SS.err = err.friendly || friendlyNetError(err); }
   SS.busy = false; renderStudent();
