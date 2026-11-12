@@ -386,6 +386,8 @@ body.student-mode .sv{padding:28px 24px}
 .host-link{margin-top:18px;font-size:13px;color:var(--muted);text-decoration:none}
 .host-link:hover{color:var(--cyan)}
 .join-url{font-family:var(--display);font-weight:700;color:#fff;word-break:break-all}
+.upd-banner{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;max-width:calc(100% - 32px);padding:10px 10px 10px 16px;border-radius:14px;background:rgba(10,17,36,.95);border:1px solid rgba(58,214,255,.45);box-shadow:0 12px 40px rgba(0,0,0,.5);font-size:13.5px;animation:fadeIn .4s both}
+.upd-banner button{flex:none;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}
 .net-err{max-width:620px;margin:60px auto;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
 .net-err p{color:#ffb3bf;margin:0;line-height:1.5}
 .view-tabs button{position:relative}
@@ -1526,6 +1528,31 @@ const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, re
    Students open the page normally; the teacher adds ?host to the address.
    ?net=local swaps Firebase for a stand-in that links browser tabs (for testing).
    ========================================================= */
+/* ---------- Automatic updates ----------
+   APP_VERSION must match live/version.json; bump both every time the game is published. */
+const APP_VERSION = '2026-11-12b';
+let NEW_VERSION = null;
+async function checkVersion(){
+  if (location.protocol === 'file:') return;
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
+    const v = (await r.json()).version;
+    if (v && v !== APP_VERSION) { NEW_VERSION = v; maybeUpdate(); }
+  } catch (e) { /* offline or blocked: just keep going */ }
+}
+/* Only reload when nobody would lose anything: the host on the setup screen, or a student who hasn't joined a game. */
+const safeToReload = () => ROLE === 'host' ? S.phase === 'setup' : !SS.joined;
+function maybeUpdate(){
+  if (!NEW_VERSION) return;
+  if (safeToReload()) {
+    try { if (sessionStorage.getItem('erl-upd') === NEW_VERSION) return; sessionStorage.setItem('erl-upd', NEW_VERSION); } catch (e) {}
+    const u = new URL(location.href); u.searchParams.set('v', NEW_VERSION); location.replace(u.toString());
+  } else if (!document.getElementById('updBanner')) {
+    const d = document.createElement('div'); d.id = 'updBanner'; d.className = 'upd-banner';
+    d.innerHTML = `<span>A new version of the game is ready. It will update after this game.</span><button data-act="updateNow">Update now</button>`;
+    document.body.appendChild(d);
+  }
+}
 const PARAMS = new URLSearchParams(location.search);
 const ROLE = PARAMS.has('host') ? 'host' : 'student';
 const LOCAL_NET = PARAMS.get('net') === 'local';
@@ -1846,13 +1873,16 @@ function renderHost(){
   if (S.phase === 'lobby') S.players.forEach(p => shownChips.add(p.id));
   $('#host').querySelectorAll('[data-ind]').forEach(el => el.indeterminate = true);
 }
-function renderStudent(){ $('#student').innerHTML = ROLE === 'student' ? studentLiveView() : sView(); if (ROLE === 'host') updateTabs(); }
+function renderStudent(){
+  if (ROLE === 'student' && NEW_VERSION && !SS.joined && !SS.ended && !SS.removed) maybeUpdate();
+  $('#student').innerHTML = ROLE === 'student' ? studentLiveView() : sView(); if (ROLE === 'host') updateTabs(); }
 /* On narrow windows: light up the Student tab when the student has something to do. */
 function updateTabs(){
   const need = (S.phase === 'lobby' && !S.you.joined) || (S.phase === 'question' && S.you.joined && !S.answers.you);
   $('#viewTabs').classList.toggle('need', need && !$('#stage').classList.contains('show-student'));
 }
 function render(){
+  if (NEW_VERSION && safeToReload()) maybeUpdate();
   if (ROLE === 'student') return renderStudent();
   renderHost(); renderStudent(); pushState();
 }
@@ -2163,6 +2193,7 @@ document.addEventListener('click', e => {
   if (act === 'back') { closeRoom(); S.netError = ''; S.phase = 'setup'; S.players = S.players.filter(p => p.id === 'you'); render(); }
   if (act === 'retryLive') openLiveLobby();
   if (act === 'joinLive') joinLive();
+  if (act === 'updateNow') { if (S.live && S.room && ROLE === 'host') closeRoom(); try { sessionStorage.setItem('erl-upd', NEW_VERSION); } catch (e) {} const u = new URL(location.href); u.searchParams.set('v', NEW_VERSION); location.replace(u.toString()); }
   if (act === 'rejoin') { SS.ended = SS.removed = false; SS.joined = false; S.you.joined = false; renderStudent(); }
   if (act === 'join') joinYou();
   if (act === 'submitOrder') answer({order:[...S.myOrder]});
@@ -2312,6 +2343,7 @@ window.addEventListener('pagehide', () => { if (ROLE === 'host') closeRoom(); })
 S.settings.mode = liveAvailable() ? 'live' : 'practice';
 applyLayout();
 render();
+checkVersion(); setInterval(checkVersion, 5 * 60 * 1000);
 </script>
 </body>
 </html>
