@@ -125,7 +125,14 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0}
 .tree{display:flex;flex-direction:column;gap:12px}
 .unit{border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.025);overflow:hidden}
 .unit-head{display:flex;align-items:center;gap:12px;padding:14px 16px;font-weight:600}
-.unit-head .count{margin-left:auto;font-size:12px;color:var(--muted);font-weight:500}
+.unit-head .count{margin-left:auto;font-size:12px;color:var(--muted);font-weight:500;text-align:right}
+.unit-head .count b{color:var(--cyan);font-weight:600}
+.unit-tog{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left;font:inherit;color:inherit;padding:0;background:none;border:0;cursor:pointer}
+.unit-tog .chev{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--line2);background:var(--panel);flex:none;transition:transform .2s,background .2s}
+.unit-tog:hover .chev{background:var(--panel2)}
+.unit-tog .chev svg{width:14px;height:14px;transition:transform .2s}
+.unit.open .unit-tog .chev svg{transform:rotate(90deg)}
+.unit:not(.open) .subs{display:none}
 .unit.off .unit-head{color:var(--dim)}
 .subs{border-top:1px solid var(--line);padding:6px 8px 10px}
 .sub{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:14px}
@@ -2085,7 +2092,7 @@ function musInit(){
 const MAX_PLAYERS = 25;
 const S = {
   phase:'setup', paused:false,
-  settings:{concepts:new Set(SYLLABUS.flatMap(u => u.subs).flatMap(s => s.concepts).map(c => c.id)), hl:true, count:10, time:20, bots:24},
+  openUnits:new Set(), settings:{concepts:new Set(), hl:true, count:10, time:20, bots:24},
   pin:'', players:[], botTarget:0, nextBotAt:0, lobbyClock:0,
   questions:[], qi:0, elapsed:0, answers:{}, plan:{}, doneAt:null, results:{},
   you:{joined:false, name:'', icon:randomIcon()}, myOrder:[], showStudent:true,
@@ -2100,7 +2107,7 @@ const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, re
    ========================================================= */
 /* ---------- Automatic updates ----------
    APP_VERSION must match live/version.json; bump both every time the game is published. */
-const APP_VERSION = '2026-11-12g';
+const APP_VERSION = '2026-11-12h';
 let NEW_VERSION = null;
 async function checkVersion(){
   if (location.protocol === 'file:') return;
@@ -2209,14 +2216,18 @@ function vSetup(){
           <input type="checkbox" class="cb" data-concept="${c.id}" ${S.settings.concepts.has(c.id)?'checked':''}>
           <span>${esc(c.name)}</span><span class="n">${conceptCount(c.id)} questions</span></label>`).join('')}</div>` : ''}`;
     }).join('')}</div>` : '';
-    return `<div class="unit ${all.length ? '' : 'off'}"><div class="unit-head">
+    const open = all.length && S.openUnits.has(u.id);
+    const picked = all.filter(id => S.settings.concepts.has(id)).reduce((t,id) => t + conceptCount(id), 0);
+    const count = !all.length ? 'Coming soon' : sel.length ? `<b>${sel.length} of ${all.length} ticked</b> · ${picked} of ${total} questions` : `${total} questions`;
+    return `<div class="unit ${all.length ? '' : 'off'} ${open ? 'open' : ''}"><div class="unit-head">
       <input type="checkbox" class="cb" data-unit="${u.id}" ${st==='all'?'checked':''} ${st==='some'?'data-ind="1"':''} ${st==='off'?'disabled':''} aria-label="${esc(u.name)}">
-      <span>${esc(u.name)}</span><span class="count">${all.length ? `${total} questions` : 'Coming soon'}</span></div>${subs}</div>`;
+      ${all.length ? `<button class="unit-tog" data-unit-tog="${u.id}" aria-expanded="${open?'true':'false'}"><span>${esc(u.name)}</span><span class="count">${count}</span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span></button>`
+        : `<span>${esc(u.name)}</span><span class="count">${count}</span>`}</div>${subs}</div>`;
   }).join('');
   const pct = (v,min,max) => ((v-min)/(max-min)*100) + '%';
   return `<div class="setup fade-in">
     <div class="setup-intro"><div class="eyebrow">New game</div><h1>What are we revising today?</h1>
-      <div class="muted">Tick a whole unit, a subtopic or a single concept. Questions are picked at random from what you tick.</div></div>
+      <div class="muted">Open a unit, then tick a whole unit, a subtopic or a single concept. Questions are picked at random from what you tick.</div></div>
     <div class="tree">${unitHtml}</div>
     <div class="settings card">
       <div class="field"><label>Game mode <span>${S.settings.mode==='live' ? 'students join on their own laptops' : 'you plus practice bots'}</span></label>
@@ -2735,6 +2746,7 @@ setInterval(() => {
 document.addEventListener('click', e => {
   const t = e.target.closest('button, [data-concept]'); if (!t) return;
   if (t.id === 'hostPrimary') return hostPrimary();
+  if (t.dataset.unitTog) { const id = t.dataset.unitTog; S.openUnits.has(id) ? S.openUnits.delete(id) : S.openUnits.add(id); return renderHost(); }
   if (t.id === 'toggleStudent') { S.showStudent = !S.showStudent; $('#stage').classList.toggle('solo', !S.showStudent); t.textContent = S.showStudent ? 'Hide student view' : 'Show student view'; return; }
   if (t.dataset.icon) {
     S.you.icon = okIcon(t.dataset.icon);
