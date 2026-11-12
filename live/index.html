@@ -1990,6 +1990,8 @@ function svgMatrix(m, mini){
   }));
   return s + '</svg>';
 }
+/* Keep start-anchored labels inside the 352px-wide frame (estimated text width). */
+const fitX = (t, x, mini) => { const w = String(t).replace(/[₀-₉]/g, '').length * (mini ? 18.5 : 11.5) + (/[₀-₉]/.test(t) ? (mini ? 19 : 10) : 0); return Math.min(x, 348 - w); };
 function svgDiagram(key, mini=false){
   const d = DIAG[key]; if (d.matrix) return svgMatrix(d.matrix, mini);
   const ys = d.ys || 22; const X = x => 66 + x * 26, Y = y => 230 - y * ys;
@@ -1998,7 +2000,7 @@ function svgDiagram(key, mini=false){
   const areas = d.areas === 'six' ? AREAS6 : (d.areas || []);
   areas.forEach((a,i) => s += `<path class="ar ${i%2?'ar2':''}" d="M${a.pts.map(([x,y]) => X(x)+' '+Y(y)).join('L')}z"/>`);
   const [ya, xa] = d.axes || ['P','Q'];
-  s += `<text x="52" y="24" text-anchor="end">${ya}</text><text x="346" y="262" text-anchor="end">${xa}</text><text x="58" y="254" text-anchor="end">0</text>`;
+  s += `<text x="52" y="${mini ? 28 : 24}" text-anchor="end"${mini && ya.length > 2 ? ' style="font-size:16px"' : ''}>${ya}</text><text x="346" y="262" text-anchor="end">${xa}</text><text x="58" y="254" text-anchor="end">0</text>`;
   (d.dots||[]).forEach(p => {
     if (p.yl !== undefined) s += `<path class="guide" d="M66 ${Y(p.y)}H${X(p.x)}"/><text x="60" y="${Y(p.y)+6}" text-anchor="end">${lbl(p.yl)}</text>`;
     if (p.xl !== undefined) s += `<path class="guide" d="M${X(p.x)} ${Y(p.y)}V230"/><text x="${X(p.x)}" y="256" text-anchor="middle">${lbl(p.xl)}</text>`;
@@ -2006,7 +2008,8 @@ function svgDiagram(key, mini=false){
   (d.hlines||[]).forEach(h => s += `<line class="ln pc" x1="66" y1="${Y(h.y)}" x2="${X(9.4)}" y2="${Y(h.y)}"/><text class="pc" x="60" y="${Y(h.y)+6}" text-anchor="end">${lbl(h.label)}</text>`);
   const label = (l, ax, ay, bx, by) => {
     if (!l.label) return '';
-    const [tx, ty] = l.lp ? [X(l.lp[0]), Y(l.lp[1])] : [X(bx)+7, Y(by) + (by > ay ? 4 : 16)];
+    let [tx, ty] = l.lp ? [X(l.lp[0]), Y(l.lp[1])] : [X(bx)+7, Y(by) + (by > ay ? 4 : 16)];
+    tx = fitX(l.label, tx, mini);
     return `<text class="${l.k}${l.old?' old':''}" x="${tx}" y="${ty}"${l.alt?' style="fill:#7aa8ff"':''}>${lbl(l.label)}</text>`;
   };
   (d.lines||[]).forEach(l => {
@@ -2018,7 +2021,7 @@ function svgDiagram(key, mini=false){
     const pts = []; for (let i = 0; i <= 48; i++) { const x = c.x0 + (c.x1 - c.x0) * i / 48; pts.push(X(x).toFixed(1) + ' ' + Y(c.f(x)).toFixed(1)); }
     s += `<path class="ln ${c.k}" d="M${pts.join('L')}"/>` + label(c, c.x0, c.f(c.x0), c.x1, c.f(c.x1));
   });
-  (d.texts||[]).forEach(t => s += `<text class="${t.k||''}" x="${X(t.x)}" y="${Y(t.y)+6}" text-anchor="${t.anchor||'start'}">${lbl(t.t)}</text>`);
+  (d.texts||[]).forEach(t => s += `<text class="${t.k||''}" x="${(t.anchor||'start') === 'start' ? fitX(t.t, X(t.x), mini) : X(t.x)}" y="${Y(t.y)+6}" text-anchor="${t.anchor||'start'}">${lbl(t.t)}</text>`);
   areas.filter(a => a.l).forEach(a => s += `<text class="al" x="${X(a.at[0])}" y="${Y(a.at[1])+8}" text-anchor="middle">${a.l}</text>`);
   (d.dots||[]).forEach(p => s += `<circle class="dot" cx="${X(p.x)}" cy="${Y(p.y)}" r="5.5"/>`);
   if (d.arrow) {
@@ -2097,7 +2100,7 @@ const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, re
    ========================================================= */
 /* ---------- Automatic updates ----------
    APP_VERSION must match live/version.json; bump both every time the game is published. */
-const APP_VERSION = '2026-11-12f';
+const APP_VERSION = '2026-11-12g';
 let NEW_VERSION = null;
 async function checkVersion(){
   if (location.protocol === 'file:') return;
