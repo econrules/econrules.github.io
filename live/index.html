@@ -128,6 +128,8 @@ input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(61,123,255,.6);cursor:pointer}
 input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:0;cursor:pointer}
 .summary{display:flex;gap:10px;flex-wrap:wrap}
+.mix{font-size:13.5px;color:var(--muted);padding:10px 12px;border-radius:12px;background:rgba(58,214,255,.06);border:1px solid rgba(58,214,255,.2)}
+.mix b{color:var(--text);font-family:var(--display);font-size:15px}
 .stat{flex:1;min-width:80px;padding:12px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
 .stat b{display:block;font-family:var(--display);font-size:24px}
 .stat small{color:var(--muted);font-size:11.5px}
@@ -143,6 +145,29 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start;width:100%;min-height:160px}
 .pchip{display:inline-flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-weight:600;font-size:14.5px}
 .pchip.new{animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}
+.picon{display:block;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.ptile{display:inline-flex;align-items:center;gap:14px;padding:10px 12px 10px 10px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.ptile-n{font-family:var(--display);font-weight:700;font-size:clamp(20px,1.9vw,28px);letter-spacing:-.01em;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptile.new{animation:tileIn .6s cubic-bezier(.2,1.5,.4,1) both}
+.ptile.new .picon{animation:iconSpin .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes tileIn{0%{opacity:0;transform:translateY(16px) scale(.6)}100%{opacity:1;transform:none}}
+@keyframes iconSpin{0%{transform:rotate(-25deg) scale(.4)}100%{transform:none}}
+.ptile.me{border-color:rgba(58,214,255,.7);box-shadow:0 0 0 3px rgba(58,214,255,.18),0 10px 30px rgba(0,0,0,.3)}
+.roster{gap:14px!important}
+.ipick-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+.ipick-label span{color:var(--cyan);letter-spacing:.04em;text-transform:none;font-size:13px}
+.ipick{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.ipick-b{border-radius:14px;padding:3px;display:grid;place-items:center;transition:transform .15s,box-shadow .15s,opacity .15s;opacity:.72}
+.ipick-b:hover{transform:translateY(-2px) scale(1.06);opacity:1}
+.ipick-b.on{opacity:1;box-shadow:0 0 0 3px #fff,0 0 22px rgba(255,255,255,.35);animation:pickBounce .45s cubic-bezier(.2,1.6,.4,1)}
+.ipick-b .picon{width:100%;height:auto;max-width:48px}
+@keyframes pickBounce{0%{transform:scale(.8)}100%{transform:scale(1)}}
+.me-icon .picon{filter:drop-shadow(0 16px 40px rgba(61,123,255,.45))}
+.s-top .picon{margin-right:2px}
+.lbrow .picon{margin-left:-4px}
+.pcol .pi{margin-bottom:8px;opacity:0;animation:pop .6s cubic-bezier(.2,1.4,.4,1) both}
+.pcol.p1 .pi{animation-delay:1.1s} .pcol.p2 .pi{animation-delay:.6s} .pcol.p3 .pi{animation-delay:.2s}
+.rest div{align-items:center}
 .still .fade-in{animation:none}
 .pchip.me{border-color:rgba(58,214,255,.6);background:rgba(58,214,255,.12);box-shadow:0 0 0 3px rgba(58,214,255,.12)}
 .x{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;color:var(--dim);transition:.15s}
@@ -273,7 +298,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .lbgap{text-align:center;color:var(--dim);letter-spacing:.3em}
 
 /* ---------- podium ---------- */
-.podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:36px auto 10px;height:330px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:30px auto 10px;height:420px}
 .pcol{display:flex;flex-direction:column;align-items:center;width:min(200px,28%)}
 .pcol .pn{font-family:var(--display);font-weight:700;font-size:21px;margin-bottom:4px;text-align:center;opacity:0;animation:fadeIn .5s both}
 .pcol .ps{color:var(--muted);font-size:14px;margin-bottom:10px;opacity:0;animation:fadeIn .5s both}
@@ -465,9 +490,9 @@ const SYLLABUS = [
 /* type: mc | diagram (diagram in the question) | diagram-options (answers are diagrams) | order */
 const BANK = [
   // ---------- PED ----------
-  {id:'ped1', concept:'PED', level:'SL', type:'mc', q:'A good has a PED of −0.4. Demand for this good is…',
+  {id:'ped1', concept:'PED', level:'SL', type:'mc', q:'A good has a PED of 0.4. Demand for this good is…',
    options:['Price inelastic','Price elastic','Unit elastic','Perfectly elastic'], answer:0,
-   exp:'|PED| is less than 1, so quantity demanded changes by a smaller percentage than price.'},
+   exp:'PED is less than 1, so quantity demanded changes by a smaller percentage than price.'},
   {id:'ped2', concept:'PED', level:'SL', type:'mc', q:'A firm’s product has price inelastic demand. To increase total revenue, the firm should…',
    options:['Raise its price','Lower its price','Keep its price the same','Increase its output'], answer:0,
    exp:'With inelastic demand, the % fall in quantity demanded is smaller than the % rise in price, so total revenue (P × Q) rises.'},
@@ -476,8 +501,8 @@ const BANK = [
    exp:'Close substitutes let consumers switch easily when the price rises, so quantity demanded responds strongly.'},
   {id:'ped4', concept:'PED', level:'HL', type:'mc', double:true, time:1.5,
    q:'The price of a good rises from $10 to $12 and quantity demanded falls from 100 to 90 units. What is the PED?',
-   options:['−0.5','−2.0','−0.2','−5.0'], answer:0,
-   exp:'%ΔQd = −10 ÷ 100 = −10%. %ΔP = 2 ÷ 10 = +20%. PED = −10% ÷ 20% = −0.5.'},
+   options:['0.5','2.0','0.2','5.0'], answer:0,
+   exp:'%ΔQd = 10 ÷ 100 = 10% (a fall). %ΔP = 2 ÷ 10 = 20% (a rise). PED = 10% ÷ 20% = 0.5. PED is usually written without the minus sign.'},
   {id:'ped5', concept:'PED', level:'SL', type:'diagram', diagram:'pedCompare',
    q:'D₁ and D₂ pass through the same point. At P₁, which demand curve is relatively more price elastic?',
    options:['D₂, the flatter curve','D₁, the steeper curve','Both are equally elastic','You cannot tell from a diagram'], answer:0,
@@ -487,8 +512,8 @@ const BANK = [
    options:['0 — perfectly inelastic','1 — unit elastic','Infinity — perfectly elastic','Between 0 and 1'], answer:0,
    exp:'Quantity demanded does not change at all when price changes, so PED = 0.'},
   {id:'ped7', concept:'PED', level:'SL', type:'order', q:'Order these PED values from most price elastic to least price elastic.',
-   items:['−3.0','−1.5','−1.0','−0.4','0'],
-   exp:'Ignore the sign and look at the size: the bigger |PED|, the more price elastic the demand.'},
+   items:['3.0','1.5','1.0','0.4','0'],
+   exp:'The bigger the PED value, the more price elastic the demand: above 1 is elastic, below 1 is inelastic, and 0 is perfectly inelastic.'},
   {id:'ped8', concept:'PED', level:'SL', type:'order', double:true, q:'Put this chain of reasoning in order.',
    items:['The product has many close substitutes','Demand for the product is price elastic','The firm lowers its price','Quantity demanded rises by a larger percentage','Total revenue rises'],
    exp:'Substitutes make demand price elastic. With elastic demand, a price cut raises revenue because the % rise in Qd outweighs the % fall in price.'},
@@ -1057,6 +1082,233 @@ const SHAPES = [
   '<svg class="shape" viewBox="0 0 24 24"><path d="M12 1.5 22.5 12 12 22.5 1.5 12z"/></svg>',
   '<svg class="shape" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>',
   '<svg class="shape" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5"/></svg>'];
+/* ---------- 30 original econ characters (100×100 drawings) ---------- */
+const CO = '#1a1f36';
+const chEyes = (x1, x2, y, r = 6.5, look = 0) => [x1, x2].map(x =>
+  `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${CO}" stroke-width="2.5"/><circle cx="${x + look}" cy="${y + 1}" r="${r * .56}" fill="${CO}"/><circle cx="${x + look - r * .22}" cy="${y - r * .12}" r="${r * .22}" fill="#fff"/>`).join('');
+const chHappy = (x1, x2, y, w = 5) => [x1, x2].map(x => `<path d="M${x - w} ${y + 2}q${w} ${-w * 1.5} ${w * 2} 0" fill="none" stroke="${CO}" stroke-width="3.2" stroke-linecap="round"/>`).join('');
+const chSleepy = (x1, x2, y, w = 5) => [x1, x2].map(x => `<path d="M${x - w} ${y}q${w} ${w * 1.2} ${w * 2} 0" fill="none" stroke="${CO}" stroke-width="3.2" stroke-linecap="round"/>`).join('');
+const chCheeks = (x1, x2, y, r = 4.5) => [x1, x2].map(x => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * .65}" fill="#ff6b9a" opacity=".55"/>`).join('');
+const chBrows = (x1, x2, y, w = 6, angry = true) => `<path d="M${x1 - w} ${y - (angry ? 2 : -1)}l${w * 2} ${angry ? 3 : -2}M${x2 + w} ${y - (angry ? 2 : -1)}l${-w * 2} ${angry ? 3 : -2}" stroke="${CO}" stroke-width="3" stroke-linecap="round"/>`;
+function chMouth(type, x, y, w = 6){
+  const s = `stroke="${CO}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+  switch (type) {
+    case 'smile': return `<path d="M${x - w} ${y}q${w} ${w * 1.1} ${w * 2} 0" fill="none" ${s}/>`;
+    case 'grin':  return `<path d="M${x - w} ${y}q${w} ${w * 1.7} ${w * 2} 0z" fill="#7a1f3d" ${s}/><path d="M${x - w * .45} ${y + w * .55}q${w * .45} ${-w * .35} ${w * .9} 0" fill="#ff7a93"/>`;
+    case 'o':     return `<ellipse cx="${x}" cy="${y + 2}" rx="${w * .45}" ry="${w * .6}" fill="#7a1f3d" ${s}/>`;
+    case 'frown': return `<path d="M${x - w} ${y + w * .7}q${w} ${-w * 1.1} ${w * 2} 0" fill="none" ${s}/>`;
+    case 'flat':  return `<path d="M${x - w} ${y + 1}h${w * 2}" ${s}/>`;
+    case 'smirk': return `<path d="M${x - w} ${y + 1}q${w * 1.3} ${w * .7} ${w * 2} ${-w * .6}" fill="none" ${s}/>`;
+    case 'wavy':  return `<path d="M${x - w} ${y + 2}q${w * .5} -3 ${w} 0t${w} 0" fill="none" ${s}/>`;
+    case 'tongue':return `<path d="M${x - w} ${y}q${w} ${w * 1.2} ${w * 2} 0" fill="none" ${s}/><path d="M${x + w * .1} ${y + w * .5}q${w * .35} ${w * 1.1} ${w * .8} ${w * .1}" fill="#ff7a93" ${s} stroke-width="2.4"/>`;
+  }
+}
+const OL = `stroke="${CO}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
+
+/* [id, name, background from, background to, drawing] */
+const ICONS = [
+  // ---- the animals (real econ terms)
+  ['bull', 'Bull Market', '#10b981', '#6ee7b7',
+   `<path d="M24 34c-9-2-13-9-12-17 4 6 9 8 15 8M76 34c9-2 13-9 12-17-4 6-9 8-15 8" fill="#fff4d6" ${OL}/>
+    <path d="M22 44c0-14 12-22 28-22s28 8 28 22c0 9-3 15-7 20v10H29V64c-4-5-7-11-7-20z" fill="#a86b3c" ${OL}/>
+    <ellipse cx="50" cy="68" rx="20" ry="13" fill="#f0b48a" ${OL}/><circle cx="43" cy="68" r="2.6" fill="${CO}"/><circle cx="57" cy="68" r="2.6" fill="${CO}"/>
+    <path d="M28 42h44l-2 9c-1 4-5 6-9 6s-7-3-8-7h-6c-1 4-4 7-8 7s-8-2-9-6z" fill="${CO}"/><path d="M33 45l5 0M59 45l5 0" stroke="#fff" stroke-width="2" opacity=".7" stroke-linecap="round"/>
+    ${chMouth('smile', 50, 74, 6)}
+    <path d="M74 16l7-8 7 8M81 8v14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`],
+  ['bear', 'Bear Market', '#ef4444', '#fca5a5',
+   `<circle cx="27" cy="30" r="9" fill="#7c4a2d" ${OL}/><circle cx="73" cy="30" r="9" fill="#7c4a2d" ${OL}/><circle cx="27" cy="30" r="4" fill="#d9a07a"/><circle cx="73" cy="30" r="4" fill="#7c4a2d"/><circle cx="73" cy="30" r="4" fill="#d9a07a"/>
+    <ellipse cx="50" cy="54" rx="29" ry="27" fill="#7c4a2d" ${OL}/><ellipse cx="50" cy="64" rx="13" ry="10" fill="#d9a07a" ${OL}/>
+    <ellipse cx="50" cy="59" rx="4.5" ry="3.2" fill="${CO}"/>${chSleepy(38, 62, 48, 5)}${chBrows(38, 62, 40, 5, false)}
+    ${chMouth('frown', 50, 66, 5)}
+    <path d="M80 10v14M73 18l7 7 7-7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`],
+  ['cashcow', 'Cash Cow', '#22c55e', '#bbf7d0',
+   `<path d="M20 36c-8 0-12-5-11-10 6 1 10 3 13 6M80 36c8 0 12-5 11-10-6 1-10 3-13 6" fill="#fff" ${OL}/>
+    <path d="M30 26l-4-10 9 6M70 26l4-10-9 6" fill="#fde68a" ${OL}/>
+    <path d="M24 44c0-14 11-22 26-22s26 8 26 22c0 8-2 14-5 19H29c-3-5-5-11-5-19z" fill="#fff" ${OL}/>
+    <path d="M30 30c4-2 10 0 10 5s-6 7-10 5-3-8 0-10z" fill="${CO}"/><path d="M62 36c4-1 8 2 7 6s-6 4-8 2-3-7 1-8z" fill="${CO}"/>
+    <ellipse cx="50" cy="68" rx="21" ry="14" fill="#ffb3c6" ${OL}/><ellipse cx="43" cy="66" rx="2.8" ry="3.6" fill="#b9506f"/><ellipse cx="57" cy="66" rx="2.8" ry="3.6" fill="#b9506f"/>
+    ${chEyes(40, 60, 47, 6)}${chMouth('smile', 50, 74, 5)}
+    <circle cx="82" cy="76" r="10" fill="#fde047" ${OL}/><text x="82" y="81" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="14" fill="${CO}">$</text>`],
+  ['fatcat', 'Fat Cat', '#8b5cf6', '#c4b5fd',
+   `<path d="M24 46l-2-22 16 12M76 46l2-22-16 12" fill="#f59e0b" ${OL}/>
+    <ellipse cx="50" cy="58" rx="30" ry="25" fill="#f59e0b" ${OL}/><path d="M36 40c4 3 4 7 2 10M50 36v8M64 40c-4 3-4 7-2 10" stroke="#c2410c" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M32 26h36l-3-16H35z" fill="${CO}"/><rect x="26" y="25" width="48" height="6" rx="3" fill="${CO}"/><rect x="35" y="19" width="30" height="4" fill="#fbbf24"/>
+    ${chHappy(39, 61, 56, 5)}<circle cx="61" cy="56" r="8.5" fill="none" stroke="#fbbf24" stroke-width="2.6"/><path d="M69 58q4 8 1 16" fill="none" stroke="#fbbf24" stroke-width="1.6"/>
+    <path d="M47 64l3 3 3-3z" fill="#be185d" ${OL} stroke-width="2"/>${chMouth('smirk', 50, 68, 6)}
+    <path d="M26 62l-12-2M26 67l-12 3M74 62l12-2M74 67l12 3" stroke="${CO}" stroke-width="2" stroke-linecap="round"/>`],
+  ['loanshark', 'Loan Shark', '#0ea5e9', '#7dd3fc',
+   `<path d="M50 10l12 22H40z" fill="#64748b" ${OL}/>
+    <path d="M16 56c0-18 15-28 34-28s34 10 34 28c0 14-15 24-34 24S16 70 16 56z" fill="#94a3b8" ${OL}/>
+    <path d="M24 62c6 9 16 13 26 13s20-4 26-13c-8 4-17 6-26 6s-18-2-26-6z" fill="#f1f5f9" ${OL} stroke-width="2.4"/>
+    ${chEyes(38, 62, 46, 6, 1)}${chBrows(38, 62, 38, 6)}
+    <path d="M30 60h40c-3 7-11 11-20 11s-17-4-20-11z" fill="#7a1f3d" ${OL}/><path d="M32 60l3 5 3-5 3 5 3-5 3 5 3-5 3 5 3-5 3 5 3-5 3 5 3-5" fill="#fff" stroke="${CO}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M82 70l8-4-3 10" fill="#64748b" ${OL} stroke-width="2.4"/>`],
+  ['unicorn', 'Unicorn', '#ec4899', '#a78bfa',
+   `<path d="M50 6l6 22H44z" fill="#fde047" ${OL}/><path d="M46 16l8-2M45 21l10-2" stroke="#ca8a04" stroke-width="2"/>
+    <path d="M22 30c-6 8-6 20 0 28M78 30c6 8 6 20 0 28" fill="none" stroke="#f472b6" stroke-width="8" stroke-linecap="round"/><path d="M26 26c-8 6-10 18-6 28M74 26c8 6 10 18 6 28" fill="none" stroke="#60a5fa" stroke-width="5" stroke-linecap="round"/>
+    <path d="M30 28l-6-10 12 6M70 28l6-10-12 6" fill="#fff" ${OL}/>
+    <path d="M26 50c0-16 11-24 24-24s24 8 24 24c0 16-11 30-24 30S26 66 26 50z" fill="#fff" ${OL}/>
+    <path d="M36 28c6-6 22-6 28 0-4 6-10 8-14 8s-10-2-14-8z" fill="#facc15" ${OL} stroke-width="2.4"/><path d="M40 30c4-3 16-3 20 0" stroke="#fb7185" stroke-width="3" fill="none"/>
+    ${chHappy(40, 60, 50, 5)}${chCheeks(35, 65, 58)}${chMouth('grin', 50, 63, 6)}
+    <path d="M84 16l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff"/>`],
+  ['blackswan', 'Black Swan', '#14b8a6', '#99f6e4',
+   `<path d="M14 70c0-9 12-13 26-11l24 4c12 2 22 6 22 12 0 9-16 13-36 13S14 80 14 70z" fill="#111827" ${OL}/>
+    <path d="M36 66c8 4 20 5 32 2" fill="none" stroke="#475569" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M40 62C28 50 28 34 40 26c7-5 16-4 20 2" fill="none" stroke="${CO}" stroke-width="15" stroke-linecap="round"/>
+    <path d="M40 62C28 50 28 34 40 26c7-5 16-4 20 2" fill="none" stroke="#111827" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="58" cy="30" r="12" fill="#111827" ${OL}/><path d="M68 28l16 5-16 6z" fill="#ef4444" ${OL}/>
+    <circle cx="59" cy="27" r="5.5" fill="#fff" stroke="${CO}" stroke-width="2"/><circle cx="60" cy="28" r="3" fill="${CO}"/><circle cx="58.8" cy="26.6" r="1.1" fill="#fff"/>
+    <path d="M52 16l2 4M59 13v5M66 16l-2 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="72" y="62" font-family="Arial Black,Arial" font-weight="900" font-size="18" fill="#fff">?!</text>`],
+  // ---- econ objects with faces
+  ['potato', 'Giffen Potato', '#f59e0b', '#fde68a',
+   `<path d="M22 48c-2-16 10-30 28-30 20 0 32 12 30 30-1 16-12 32-30 32-16 0-27-14-28-32z" fill="#c8915a" ${OL}/>
+    <circle cx="33" cy="36" r="2.2" fill="#8a5a2b"/><circle cx="66" cy="68" r="2.6" fill="#8a5a2b"/><circle cx="70" cy="34" r="1.8" fill="#8a5a2b"/><circle cx="30" cy="66" r="2" fill="#8a5a2b"/>
+    ${chEyes(41, 60, 46, 6.5, 1)}${chCheeks(35, 66, 56)}${chMouth('tongue', 50, 60, 7)}
+    <path d="M78 18c3 0 6 3 6 6M84 12c5 1 9 6 9 11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".9"/>`],
+  ['tea', 'ExternaliTea', '#0d9488', '#5eead4',
+   `<path d="M38 26c-6-6 2-10-2-16M52 24c-6-6 2-10-2-16" fill="none" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+    <path d="M60 18c4-6 14-6 16 0 6-1 9 6 5 10H58c-4-3-2-9 2-10z" fill="#94a3b8" ${OL} stroke-width="2.4"/>
+    <path d="M18 36h56l-4 30c-1 8-8 14-16 14H38c-8 0-15-6-16-14z" fill="#fff" ${OL}/><path d="M74 42c10 0 12 14 0 16" fill="none" ${OL} stroke-width="5"/><path d="M74 42c10 0 12 14 0 16" fill="none" stroke="#fff" stroke-width="1.5"/>
+    <ellipse cx="46" cy="37" rx="27" ry="4" fill="#b45309" ${OL} stroke-width="2.4"/>
+    ${chEyes(36, 56, 54, 6)}${chCheeks(30, 62, 63)}${chMouth('smirk', 46, 66, 6)}
+    <path d="M14 86h66" stroke="${CO}" stroke-width="3" stroke-linecap="round"/>`],
+  ['hand', 'Invisible Hand', '#4f46e5', '#a5b4fc',
+   `<path d="M30 84V50l-8-12c-3-5 3-9 7-5l7 8V18c0-6 9-6 9 0v18-24c0-6 9-6 9 0v24-20c0-6 9-6 9 0v22-14c0-6 8-6 8 0v32c0 16-8 30-22 30z" fill="#fff" fill-opacity=".55" stroke="#fff" stroke-width="3" stroke-dasharray="6 5" stroke-linejoin="round"/>
+    ${chEyes(42, 58, 54, 5.5)}${chMouth('grin', 50, 63, 5.5)}${chCheeks(36, 64, 61, 3.8)}
+    <path d="M14 22l4 3M12 32h5M84 20l-4 3" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`],
+  ['piggy', 'Piggy Banker', '#38bdf8', '#bae6fd',
+   `<path d="M30 30l-4-12 12 6M66 26l6-10 2 13" fill="#f9a8d4" ${OL}/>
+    <ellipse cx="48" cy="54" rx="32" ry="26" fill="#f9a8d4" ${OL}/><rect x="40" y="27" width="18" height="5" rx="2.5" fill="${CO}"/>
+    <ellipse cx="74" cy="56" rx="9" ry="10" fill="#fbcfe8" ${OL}/><ellipse cx="72" cy="53" rx="1.8" ry="2.6" fill="#be185d"/><ellipse cx="77" cy="58" rx="1.8" ry="2.6" fill="#be185d"/>
+    ${chEyes(46, 62, 46, 5.5, 1)}${chMouth('smile', 56, 64, 5)}
+    <path d="M24 70v10h8v-6M58 76v6h8v-8" fill="#f9a8d4" ${OL}/><path d="M16 50c-6 0-6-8 0-8" fill="none" ${OL}/>
+    <path d="M40 74l6 6 6-6-6-4z" fill="#1d4ed8" ${OL} stroke-width="2.4"/>`],
+  ['coin', 'Small Change', '#f97316', '#fdba74',
+   `<circle cx="50" cy="50" r="32" fill="#fbbf24" ${OL}/><circle cx="50" cy="50" r="25" fill="none" stroke="#d97706" stroke-width="3"/>
+    <path d="M30 34a26 26 0 0 1 16-11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+    ${chEyes(41, 59, 46, 6)}${chCheeks(35, 65, 56)}${chMouth('grin', 50, 58, 7)}
+    <path d="M86 20l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/>`],
+  ['gold', 'Gold Standard', '#1e3a8a', '#3b82f6',
+   `<path d="M14 74l12-34h48l12 34z" fill="#facc15" ${OL}/><path d="M26 40h48l-4 8H30z" fill="#fde68a"/><path d="M20 70l8-24" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    ${chEyes(41, 59, 55, 6)}${chMouth('smile', 50, 64, 6)}${chCheeks(34, 66, 63, 4)}
+    <path d="M42 76l8 4 8-4-8-4z" fill="#ef4444" ${OL} stroke-width="2"/>
+    <path d="M78 18l2.4 6 6 2.4-6 2.4-2.4 6-2.4-6-6-2.4 6-2.4zM22 16l1.4 3.5 3.5 1.4-3.5 1.4-1.4 3.5-1.4-3.5-3.5-1.4 3.5-1.4z" fill="#fff"/>`],
+  ['growth', 'Growth Spurt', '#0f766e', '#34d399',
+   `<path d="M12 80h76" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+    <rect x="18" y="58" width="14" height="22" rx="3" fill="#a7f3d0" ${OL}/><rect x="38" y="44" width="14" height="36" rx="3" fill="#6ee7b7" ${OL}/>
+    <rect x="58" y="26" width="24" height="54" rx="5" fill="#10b981" ${OL}/>
+    <path d="M60 18l10-10 10 10M70 8v14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    ${chEyes(65, 76, 42, 4.5)}${chMouth('grin', 70.5, 51, 5)}
+    <path d="M22 60l4-4M42 46l4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`],
+  ['crude', 'Crude Dude', '#334155', '#94a3b8',
+   `<ellipse cx="50" cy="22" rx="24" ry="7" fill="#1f2937" ${OL}/><path d="M26 22v52c0 4 11 7 24 7s24-3 24-7V22" fill="#1f2937" ${OL}/>
+    <path d="M26 40c0 4 11 7 24 7s24-3 24-7M26 62c0 4 11 7 24 7s24-3 24-7" fill="none" stroke="#475569" stroke-width="3"/>
+    <path d="M32 46h36l-2 7c-1 4-4 6-8 6s-6-2-7-5h-2c-1 3-3 5-7 5s-7-2-8-6z" fill="#0b0f19" stroke="#64748b" stroke-width="1.6"/><path d="M36 49h5M57 49h5" stroke="#fff" stroke-width="1.8" opacity=".7" stroke-linecap="round"/>
+    ${chMouth('smirk', 50, 66, 6).replace(/#1a1f36/g, '#e2e8f0')}
+    <path d="M80 54c4 6 6 9 6 12a6 6 0 0 1-12 0c0-3 2-6 6-12z" fill="#0b0f19" stroke="#fff" stroke-width="2"/>`],
+  ['pricetag', 'Price Taker', '#dc2626', '#fb923c',
+   `<path d="M18 50l26-28h34v56H44z" fill="#fef3c7" ${OL}/><circle cx="34" cy="50" r="4.5" fill="#dc2626" ${OL} stroke-width="2"/>
+    <path d="M34 50C24 40 18 30 10 28" fill="none" stroke="#fff" stroke-width="2.4"/>
+    ${chEyes(56, 70, 42, 5)}${chCheeks(52, 74, 51, 3.5)}${chMouth('tongue', 63, 54, 6)}
+    <text x="63" y="74" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="13" fill="#dc2626">$</text>`],
+  ['bubble', 'Bubble Trouble', '#db2777', '#f9a8d4',
+   `<circle cx="48" cy="52" r="32" fill="#fff" fill-opacity=".3" stroke="#fff" stroke-width="3.2"/>
+    <path d="M30 34a24 24 0 0 1 14-9" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="66" cy="34" r="3" fill="#fff"/>
+    ${chEyes(40, 58, 50, 6.5, -1)}${chBrows(40, 58, 41, 5, false)}${chMouth('wavy', 49, 64, 6)}
+    <path d="M70 46c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8z" fill="#7dd3fc" ${OL} stroke-width="2"/>
+    <circle cx="84" cy="20" r="5" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="88" cy="32" r="2.5" fill="none" stroke="#fff" stroke-width="2"/>`],
+  ['factory', 'Mass Producer', '#475569', '#93c5fd',
+   `<circle cx="72" cy="14" r="6" fill="#e2e8f0" ${OL} stroke-width="2"/><circle cx="82" cy="10" r="4" fill="#e2e8f0" ${OL} stroke-width="2"/>
+    <path d="M14 82V46l18 10V46l18 10V46l18 10V22h12v60z" fill="#f97316" ${OL}/>
+    ${chEyes(36, 54, 66, 5.5)}${chMouth('grin', 45, 74, 5)}
+    <path d="M66 30h12" stroke="${CO}" stroke-width="3"/>`],
+  ['bill', 'Dollar Bill', '#15803d', '#86efac',
+   `<rect x="10" y="26" width="80" height="48" rx="6" fill="#bbf7d0" ${OL} transform="rotate(-6 50 50)"/>
+    <g transform="rotate(-6 50 50)"><rect x="15" y="31" width="70" height="38" rx="4" fill="none" stroke="#16a34a" stroke-width="2"/>
+    <circle cx="50" cy="50" r="16" fill="#86efac" ${OL} stroke-width="2.4"/>${chEyes(44, 56, 47, 4)}${chMouth('smile', 50, 54, 5)}
+    <text x="23" y="45" font-family="Arial Black,Arial" font-weight="900" font-size="12" fill="#15803d">$</text><text x="71" y="64" font-family="Arial Black,Arial" font-weight="900" font-size="12" fill="#15803d">$</text></g>`],
+  ['credit', 'Credit Crunch', '#7c3aed', '#c084fc',
+   `<path d="M14 30c0-3 2-5 5-5h62c3 0 5 2 5 5v38c0 3-2 5-5 5H19c-3 0-5-2-5-5z" fill="#60a5fa" ${OL}/>
+    <path d="M70 25c-2 4 2 6 0 10s3 5 1 9 4 4 3 8 5 3 5 6" fill="#c084fc" stroke="none"/><path d="M86 25H70c-2 4 2 6 0 10s3 5 1 9 4 4 3 8 5 3 5 6h7z" fill="#a855f7"/>
+    <path d="M70 25c-2 4 2 6 0 10s3 5 1 9 4 4 3 8 5 3 5 6" fill="none" ${OL}/>
+    <rect x="22" y="33" width="14" height="10" rx="2" fill="#fde047" ${OL} stroke-width="2"/>
+    ${chEyes(36, 54, 54, 5.5, -1)}${chBrows(36, 54, 46, 4.5, false)}${chMouth('o', 45, 63, 6)}
+    <path d="M80 72l3 4M86 66l4 2" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`],
+  ['scales', 'Equilibrium', '#0891b2', '#67e8f9',
+   `<path d="M50 30v44M34 82h32" ${OL} fill="none" stroke-width="4"/><path d="M14 36h72" ${OL} stroke-width="4"/>
+    <path d="M20 36l-8 20h16zM80 36l-8 20h16z" fill="none" stroke="#fff" stroke-width="2"/>
+    <path d="M8 56a12 6 0 0 0 24 0zM68 56a12 6 0 0 0 24 0z" fill="#fde047" ${OL}/>
+    <circle cx="50" cy="34" r="14" fill="#fef9c3" ${OL}/>${chSleepy(45, 55, 33, 3.2)}${chMouth('smile', 50, 38, 4)}
+    <circle cx="50" cy="16" r="3.5" fill="#fff"/>`],
+  ['quota', 'Quota Queen', '#c026d3', '#f0abfc',
+   `<path d="M30 30l-2-16 10 8 12-12 12 12 10-8-2 16z" fill="#facc15" ${OL}/><circle cx="50" cy="16" r="2.4" fill="#ef4444"/>
+    <rect x="18" y="30" width="64" height="50" rx="5" fill="#f97316" ${OL}/><path d="M30 34v42M42 34v42M58 34v42M70 34v42" stroke="#c2410c" stroke-width="3"/>
+    <rect x="30" y="42" width="40" height="28" rx="6" fill="#fed7aa" ${OL} stroke-width="2.4"/>
+    ${chHappy(42, 58, 52, 4)}${chMouth('smirk', 50, 59, 5)}${chCheeks(37, 63, 58, 3.4)}`],
+  ['fairtrade', 'Fair Trade', '#92400e', '#fbbf24',
+   `<path d="M26 26h48l-6 56H32z" fill="#fff" ${OL}/><rect x="22" y="18" width="56" height="10" rx="4" fill="#78350f" ${OL}/>
+    <path d="M28 44h44l-2 20H30z" fill="#16a34a" ${OL} stroke-width="2.4"/>
+    <path d="M50 60c-5-4-9-7-9-10a4 4 0 0 1 9-2 4 4 0 0 1 9 2c0 3-4 6-9 10z" fill="#fff"/>
+    ${chEyes(41, 59, 34, 4.5)}${chMouth('smile', 50, 70, 5)}${chCheeks(36, 64, 72, 3.5)}
+    <path d="M44 14c-3-4 3-6 0-10M56 14c-3-4 3-6 0-10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`],
+  ['taxman', 'Tax Man', '#64748b', '#cbd5e1',
+   `<path d="M24 22h52v62l-6-5-7 5-6-5-7 5-6-5-7 5-6-5-7 5z" fill="#fff" ${OL}/>
+    <path d="M22 22h56l-3-8H25z" fill="${CO}"/><ellipse cx="50" cy="14" rx="16" ry="9" fill="${CO}"/><rect x="34" y="15" width="32" height="3" fill="#ef4444"/>
+    ${chEyes(41, 59, 36, 5, 1)}${chBrows(41, 59, 28, 5)}${chMouth('flat', 50, 47, 6)}
+    <path d="M32 58h36M32 66h24" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/><text x="62" y="71" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#dc2626">%</text>`],
+  ['longrun', 'Long Run', '#312e81', '#818cf8',
+   `<rect x="24" y="12" width="52" height="8" rx="3" fill="#a16207" ${OL}/><rect x="24" y="80" width="52" height="8" rx="3" fill="#a16207" ${OL}/>
+    <path d="M30 20h40c0 14-14 18-14 30s14 16 14 30H30c0-14 14-18 14-30S30 34 30 20z" fill="#e0f2fe" fill-opacity=".85" ${OL}/>
+    <path d="M38 74c4-6 20-6 24 0z" fill="#fbbf24"/><path d="M50 52v18" stroke="#fbbf24" stroke-width="2.4" stroke-dasharray="2 3"/>
+    ${chSleepy(44, 56, 33, 3.4)}${chMouth('o', 50, 38, 3.4)}
+    <text x="72" y="40" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#fff">z</text><text x="80" y="30" font-family="Arial Black,Arial" font-weight="900" font-size="14" fill="#fff">Z</text>`],
+  ['liquidity', 'Liquidity', '#0284c7', '#67e8f9',
+   `<path d="M50 10c16 22 26 34 26 48a26 26 0 0 1-52 0c0-14 10-26 26-48z" fill="#38bdf8" ${OL}/>
+    <path d="M36 50c0-6 3-12 8-18" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+    ${chHappy(42, 58, 58, 4.5)}${chCheeks(36, 64, 66)}${chMouth('grin', 50, 66, 6)}
+    <path d="M14 86q8-5 16 0t16 0 16 0 16 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`],
+  ['elastic', 'Super Elastic', '#65a30d', '#bef264',
+   `<path d="M8 50c0-12 16-18 42-18s42 6 42 18-16 18-42 18S8 62 8 50z" fill="#facc15" ${OL}/>
+    <path d="M12 50h-8M96 50h-8M10 40l-6-4M90 40l6-4M10 60l-6 4M90 60l6 4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    ${chEyes(38, 62, 46, 6.5)}${chMouth('grin', 50, 54, 9)}
+    <path d="M28 40c4-3 8-4 12-4" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>`],
+  ['inelastic', 'Inelastic', '#9a3412', '#fb923c',
+   `<rect x="16" y="28" width="68" height="46" rx="5" fill="#b45309" ${OL}/>
+    <path d="M16 44h68M16 60h68M38 28v16M62 44v16M30 60v14M70 60v14" stroke="#7c2d12" stroke-width="2.4"/>
+    <rect x="30" y="38" width="40" height="28" rx="5" fill="#d97706" ${OL} stroke-width="2.4"/>
+    ${chEyes(42, 58, 48, 4.5)}${chBrows(42, 58, 42, 4.5)}${chMouth('flat', 50, 58, 5)}
+    <path d="M44 16h12M50 10v12" stroke="#fff" stroke-width="0" />
+    <text x="50" y="22" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="12" fill="#fff">NOPE</text>`],
+  ['laissez', 'Laissez-Faire', '#f59e0b', '#fef08a',
+   `<circle cx="50" cy="46" r="24" fill="#fde047" ${OL}/>
+    <path d="M50 10v8M50 74v8M14 46h8M78 46h8M24 20l6 6M76 20l-6 6M24 72l6-6M76 72l-6-6" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M32 40h36l-2 7c-1 4-4 6-8 6s-6-2-7-5h-2c-1 3-3 5-7 5s-7-2-8-6z" fill="${CO}"/><path d="M36 43h5M57 43h5" stroke="#fff" stroke-width="1.8" opacity=".7" stroke-linecap="round"/>
+    ${chMouth('smile', 50, 58, 7)}
+    <path d="M66 70l14 0-5 14h-4z" fill="#fff" fill-opacity=".8" ${OL} stroke-width="2.2"/><path d="M73 70l4-10" stroke="${CO}" stroke-width="2.2"/><circle cx="78" cy="59" r="3" fill="#22c55e" ${OL} stroke-width="1.6"/>`],
+  ['impulse', 'Impulse Buy', '#ea580c', '#f472b6',
+   `<path d="M8 22h12l8 40h48l8-30H24" fill="none" ${OL} stroke-width="4"/>
+    <path d="M24 32h60l-8 30H28z" fill="#fff" ${OL}/>
+    <circle cx="36" cy="76" r="6" fill="${CO}"/><circle cx="68" cy="76" r="6" fill="${CO}"/>
+    <path d="M40 40l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6zM62 40l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#f59e0b" stroke="${CO}" stroke-width="1.4" stroke-linejoin="round"/>
+    ${chMouth('grin', 51, 52, 6)}
+    <path d="M12 46h-6M12 54H2M14 62H6" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`],
+];
+
+const ICON_IDS = ICONS.map(i => i[0]);
+const okIcon = id => ICON_IDS.includes(id) ? id : 'sd';
+const randomIcon = () => ICON_IDS[Math.floor(Math.random() * ICON_IDS.length)];
+function iconSvg(id, size, cls=''){
+  const ic = ICONS.find(i => i[0] === id) || ICONS[0];
+  return `<svg class="picon ${cls}" width="${size}" height="${size}" viewBox="0 0 100 100" aria-label="${ic[1]}" role="img">
+    <defs><radialGradient id="cg-${ic[0]}" cx=".3" cy=".25" r="1"><stop offset="0" stop-color="${ic[3]}"/><stop offset="1" stop-color="${ic[2]}"/></radialGradient>
+    <clipPath id="cl-${ic[0]}"><rect x="2" y="2" width="96" height="96" rx="28"/></clipPath></defs>
+    <rect x="2" y="2" width="96" height="96" rx="28" fill="url(#cg-${ic[0]})"/><g clip-path="url(#cl-${ic[0]})">${ic[4]}</g></svg>`;
+}
+function iconPicker(){
+  return `<div class="ipick-label">Pick your character <span id="ipickName">${(ICONS.find(i => i[0] === S.you.icon) || ICONS[0])[1]}</span></div><div class="ipick" role="radiogroup" aria-label="Pick your character">${ICONS.map(i =>
+    `<button type="button" class="ipick-b ${S.you.icon === i[0] ? 'on' : ''}" data-icon="${i[0]}" title="${i[1]}" aria-label="${i[1]}" role="radio" aria-checked="${S.you.icon === i[0]}">${iconSvg(i[0], 44)}</button>`).join('')}</div>`;
+}
 const LETTERS = ['A','B','C','D'];
 const SHORT = Object.fromEntries(SYLLABUS.flatMap(u => u.subs).flatMap(s => s.concepts).map(c => [c.id, c.short || c.id]));
 const TYPE_LABEL = {mc:'Multiple choice', diagram:'Diagram', 'diagram-options':'Diagram', order:'Ordering'};
@@ -1155,7 +1407,7 @@ const S = {
   settings:{concepts:new Set(SYLLABUS.flatMap(u => u.subs).flatMap(s => s.concepts).map(c => c.id)), hl:true, count:10, time:20, bots:24},
   pin:'', players:[], botTarget:0, nextBotAt:0, lobbyClock:0,
   questions:[], qi:0, elapsed:0, answers:{}, plan:{}, doneAt:null, results:{},
-  you:{joined:false, name:''}, myOrder:[], showStudent:true,
+  you:{joined:false, name:'', icon:randomIcon()}, myOrder:[], showStudent:true,
   live:false, room:null, connecting:false, netError:'',
 };
 /* Student-side live state */
@@ -1272,6 +1524,7 @@ function vSetup(){
         <div class="seg">${[10,20,30,45].map(t => `<button data-time="${t}" class="${S.settings.time===t?'on':''}">${t}s</button>`).join('')}</div></div>
       ${S.settings.mode==='practice' ? `<div class="field"><label>Practice bots <span>${S.settings.bots} + you</span></label>
         <input type="range" id="rBots" min="0" max="24" value="${S.settings.bots}" style="--p:${pct(S.settings.bots,0,24)}"></div>` : ''}
+      ${n ? `<div class="mix">Mix: ${mixPreview()}</div>` : ''}
       <div class="summary">
         <div class="stat"><b>${n}</b><small>questions</small></div>
         <div class="stat"><b>${pool().filter(q=>q.double).length}</b><small>double-point Qs in pool</small></div>
@@ -1295,7 +1548,7 @@ function vLobby(){
       <button class="icon-btn" data-act="back">Back to setup</button>
       <button class="btn" id="hostPrimary" ${ps.length?'':'disabled'}>Start game <kbd>Space</kbd></button>
     </div>
-    <div class="roster">${ps.length ? ps.map(p => `<span class="pchip ${p.id==='you'?'me':''} ${shownChips.has(p.id)?'':'new'}">${esc(p.name)}
+    <div class="roster">${ps.length ? ps.map(p => `<span class="ptile ${p.id==='you'?'me':''} ${shownChips.has(p.id)?'':'new'}">${iconSvg(p.icon, 54)}<span class="ptile-n">${esc(p.name)}</span>
       <button class="x" data-remove="${p.id}" title="Remove ${esc(p.name)}">${ICON.x}</button></span>`).join('')
       : '<div class="empty">Waiting for players to join…</div>'}</div></div>`;
 }
@@ -1383,7 +1636,7 @@ function vLeaderboard(){
   const r = ranked(); const top = r.slice(0,5); const meIdx = r.findIndex(p => p.id === 'you');
   const row = (p,i) => {
     const mv = p.prevRank && p.prevRank !== i+1 ? (p.prevRank > i+1 ? `<span class="mv up">▲${p.prevRank-(i+1)}</span>` : `<span class="mv dn">▼${(i+1)-p.prevRank}</span>`) : '<span class="mv"></span>';
-    return `<div class="lbrow r${i+1} ${p.id==='you'?'me':''}" style="animation-delay:${i*.07}s"><span class="rk">${i+1}</span>
+    return `<div class="lbrow r${i+1} ${p.id==='you'?'me':''}" style="animation-delay:${i*.07}s"><span class="rk">${i+1}</span>${iconSvg(p.icon, 38)}
       <span class="nm">${esc(p.name)}</span>${p.gain?`<span class="gain">+${fmt(p.gain)}</span>`:''}${mv}<span class="sc">${fmt(p.score)}</span>
       <button class="x" data-remove="${p.id}" title="Remove ${esc(p.name)}">${ICON.x}</button></div>`;
   };
@@ -1393,14 +1646,14 @@ function vLeaderboard(){
 }
 
 function vPodium(){
-  const r = ranked(); const col = (p, cls, n) => p ? `<div class="pcol ${cls}"><div class="pn">${esc(p.name)}</div><div class="ps">${fmt(p.score)} pts</div><div class="blk">${n}</div></div>` : `<div class="pcol ${cls}"></div>`;
+  const r = ranked(); const col = (p, cls, n) => p ? `<div class="pcol ${cls}"><div class="pi">${iconSvg(p.icon, cls === 'p1' ? 84 : 66)}</div><div class="pn">${esc(p.name)}</div><div class="ps">${fmt(p.score)} pts</div><div class="blk">${n}</div></div>` : `<div class="pcol ${cls}"></div>`;
   const colors = ['#ff5470','#3d86ff','#ffad2e','#1fc79a','#3ad6ff','#fff'];
   const conf = Array.from({length:70}, () => `<i style="left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2.5+Math.random()*2.5}s;animation-delay:${1+Math.random()*1.5}s;transform:rotate(${Math.random()*360}deg)"></i>`).join('');
   return `<div class="confetti">${conf}</div><div class="fade-in" style="text-align:center">
     <div class="eyebrow">Game over · ${S.played} question${S.played === 1 ? '' : 's'}</div><h2 class="qtext" style="margin:8px 0 0">Final results</h2>
     <div class="podium">${col(r[1],'p2',2)}${col(r[0],'p1',1)}${col(r[2],'p3',3)}</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:18px"><button class="btn" data-act="again">Play again</button><button class="icon-btn" data-act="new">New game</button></div>
-    ${r.length > 3 ? `<div class="rest">${r.slice(3).map((p,i) => `<div class="${p.id==='you'?'me':''}"><b>${i+4}</b><span>${esc(p.name)}</span><em>${fmt(p.score)}</em></div>`).join('')}</div>` : ''}</div>`;
+    ${r.length > 3 ? `<div class="rest">${r.slice(3).map((p,i) => `<div class="${p.id==='you'?'me':''}"><b>${i+4}</b>${iconSvg(p.icon, 22)}<span>${esc(p.name)}</span><em>${fmt(p.score)}</em></div>`).join('')}</div>` : ''}</div>`;
 }
 
 /* =========================================================
@@ -1408,7 +1661,7 @@ function vPodium(){
    ========================================================= */
 function sView(){
   const q = cur(); const me = S.players.find(p => p.id === 'you');
-  const header = q ? `<div class="s-top"><b>${esc(S.you.name)}</b><span class="sp"></span>${me?`${fmt(me.score)} pts`:''}</div>` : '';
+  const header = q ? `<div class="s-top">${iconSvg(S.you.icon, 26)}<b>${esc(S.you.name)}</b><span class="sp"></span>${me?`${fmt(me.score)} pts`:''}</div>` : '';
   switch (S.phase) {
     case 'setup':
       return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>EconRules Live</h2><div class="muted">Waiting for your teacher to open a game…</div></div>`;
@@ -1416,8 +1669,9 @@ function sView(){
       if (!S.you.joined) return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>Join the game</h2>
         <div class="join-form" id="joinForm"><input class="input" value="${S.pin}" aria-label="Game PIN" readonly>
         <input class="input" id="nick" maxlength="15" placeholder="Your nickname" autocomplete="off" value="${esc(S.you.name)}">
+        ${iconPicker()}
         <button class="btn wide" data-act="join" ${activePlayers().length >= MAX_PLAYERS ? 'disabled' : ''}>${activePlayers().length >= MAX_PLAYERS ? 'Room is full' : 'Join'}</button></div></div>`;
-      return `<div class="s-center"><div class="result-ic ok">${ICON.check.replace('<svg','<svg style="stroke:#fff"')}</div><h2>You’re in!</h2><div class="muted">Look for <b style="color:var(--text)">${esc(S.you.name)}</b> on the big screen.</div></div>`;
+      return `<div class="s-center"><div class="me-icon pop">${iconSvg(S.you.icon, 110)}</div><h2>You’re in!</h2><div class="muted">Look for <b style="color:var(--text)">${esc(S.you.name)}</b> on the big screen.</div></div>`;
   }
   if (!S.you.joined) return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>Game in progress</h2><div class="muted">You can join the next game.</div></div>`;
   if (S.phase === 'getready') return `${header}<div class="s-center"><div class="eyebrow">Question ${S.qi+1}</div>
@@ -1451,9 +1705,9 @@ function sView(){
       <div class="muted">You’re in <b style="color:var(--text)">${ordinal(rank)}</b> place of ${r.length}</div>
       <div class="s-why"><b style="color:var(--good)">Why: </b>${esc(q.exp)}${q.rw ? `<div class="s-rw"><b>In the real world: </b>${esc(q.rw)}</div>` : ''}</div></div>`;
   }
-  if (S.phase === 'leaderboard') return `${header}<div class="s-center"><div class="muted">You’re in</div><div class="s-rank pop">${ordinal(rank)}</div>
+  if (S.phase === 'leaderboard') return `${header}<div class="s-center"><div class="me-icon pop">${iconSvg(S.you.icon, 84)}</div><div class="muted">You’re in</div><div class="s-rank pop">${ordinal(rank)}</div>
     <div class="muted">${fmt(me.score)} points · ${rank > 1 ? `${fmt(r[rank-2].score - me.score)} behind ${esc(r[rank-2].name)}` : 'out in front!'}</div></div>`;
-  if (S.phase === 'podium') return `<div class="s-center"><div class="muted">You finished</div><div class="s-rank pop">${ordinal(rank)}</div>
+  if (S.phase === 'podium') return `<div class="s-center"><div class="me-icon pop">${iconSvg(S.you.icon, 96)}</div><div class="muted">You finished</div><div class="s-rank pop">${ordinal(rank)}</div>
     <div class="muted">of ${r.length} players · ${fmt(me.score)} points</div>${rank <= 3 ? '<span class="chip dbl">★ On the podium!</span>' : ''}</div>`;
   return '';
 }
@@ -1514,13 +1768,26 @@ function openLobby(){
   S.phase = 'lobby'; render();
 }
 
+/* Remember the games this browser creates, so any left behind (crash, closed lid) are deleted next time. */
+const MYROOMS = 'erl-myrooms';
+const myRooms = () => { try { return JSON.parse(localStorage.getItem(MYROOMS)) || []; } catch (e) { return []; } };
+const saveMyRooms = list => { try { localStorage.setItem(MYROOMS, JSON.stringify(list)); } catch (e) {} };
+async function cleanLeftoverRooms(net){
+  const keep = [];
+  for (const pin of myRooms()) {
+    if (pin === S.pin) { keep.push(pin); continue; }
+    try { await net.remove(`rooms/${pin}`); } catch (e) { /* not ours any more, or already gone */ }
+  }
+  saveMyRooms(keep);
+}
 async function openLiveLobby(){
   S.phase = 'lobby'; S.players = []; S.pin = ''; S.netError = ''; S.botTarget = 0; render();
   try {
     const net = await getNet(); let pin;
+    await cleanLeftoverRooms(net);
     for (let i = 0; i < 10; i++) { pin = String(100000 + Math.floor(Math.random()*900000)); if (!(await net.get(`rooms/${pin}/host`))) break; }
     await net.set(`rooms/${pin}`, {host:net.uid, created:Date.now(), state:{phase:'lobby', qi:0, total:0, paused:false}});
-    S.room = `rooms/${pin}`; S.pin = pin;
+    S.room = `rooms/${pin}`; S.pin = pin; saveMyRooms([...myRooms(), pin]);
     S.unsubPlayers = net.on(`${S.room}/players`, v => onPlayers(v || {}));
   } catch (err) { S.netError = friendlyNetError(err); }
   render();
@@ -1529,13 +1796,13 @@ function onPlayers(v){
   const entries = Object.entries(v).sort((a,b) => (a[1].joinedAt||0) - (b[1].joinedAt||0));
   if (S.phase === 'lobby' && entries.length > MAX_PLAYERS) entries.slice(MAX_PLAYERS).forEach(([id]) => NET.remove(`${S.room}/players/${id}`));
   const old = new Map(S.players.map(p => [p.id, p]));
-  S.players = entries.slice(0, MAX_PLAYERS).map(([id, p]) => old.get(id) || {id, name:String(p.name || 'Player').slice(0,15), score:0, gain:0, prevRank:0});
+  S.players = entries.slice(0, MAX_PLAYERS).map(([id, p]) => old.get(id) || {id, name:String(p.name || 'Player').slice(0,15), icon:okIcon(p.icon), score:0, gain:0, prevRank:0});
   if (S.phase === 'lobby') renderHost(); else updateLive();
 }
 function closeRoom(){
   if (S.unsubPlayers) S.unsubPlayers(); if (S.unsubAns) S.unsubAns();
   S.unsubPlayers = S.unsubAns = null;
-  if (S.live && S.room && NET) NET.remove(S.room).catch(() => {});
+  if (S.live && S.room && NET) { const pin = S.pin; NET.remove(S.room).then(() => saveMyRooms(myRooms().filter(p => p !== pin))).catch(() => {}); }
   S.room = null; S.pin = '';
 }
 /* What students may see: never the answer until the reveal. */
@@ -1559,12 +1826,61 @@ function pushState(){
 function addBot(){
   const used = new Set(S.players.map(p => p.name));
   const name = shuffle(BOT_NAMES).find(n => !used.has(n)); if (!name) return;
-  S.players.push({id:'b'+Math.random().toString(36).slice(2,8), name, bot:true, skill:.45 + Math.random()*.47, score:0});
+  S.players.push({id:'b'+Math.random().toString(36).slice(2,8), name, icon:randomIcon(), bot:true, skill:.45 + Math.random()*.47, score:0});
 }
 
+/* ---------- Balanced question mix ----------
+   Aim for about 50% multiple choice, 30% diagram and 20% ordering (as far as the ticked topics allow),
+   spread evenly across the ticked topics, and avoid the same type twice in a row. */
+const KIND = q => q.type === 'order' ? 'order' : (q.type === 'mc' ? 'mc' : 'diagram');
+const KIND_LABEL = {mc:'multiple choice', diagram:'diagram', order:'ordering'};
+function mixTargets(src, n){
+  const avail = {mc:0, diagram:0, order:0}; src.forEach(q => avail[KIND(q)]++);
+  const want = {order:Math.round(n * .2), diagram:Math.round(n * .3)}; want.mc = n - want.order - want.diagram;
+  const t = {}; let spare = 0;
+  for (const k of ['order','diagram','mc']) { t[k] = Math.min(want[k], avail[k]); spare += want[k] - t[k]; }
+  for (const k of ['mc','diagram','order']) { const add = Math.min(spare, avail[k] - t[k]); t[k] += add; spare -= add; }
+  return t;
+}
+function pickBalanced(src, n){
+  n = Math.min(n, src.length);
+  const target = mixTargets(src, n);
+  const concepts = [...new Set(src.map(q => q.concept))];
+  const perConcept = n / concepts.length;
+  const left = shuffle(src), picked = [], kCount = {mc:0, diagram:0, order:0}, cCount = {};
+  while (picked.length < n && left.length) {
+    let best = -1, bestScore = -Infinity;
+    left.forEach((q, i) => {
+      const k = KIND(q), c = q.concept;
+      const typeNeed = (target[k] - kCount[k]) / Math.max(1, target[k]);
+      const topicNeed = (perConcept - (cCount[c] || 0)) / perConcept;
+      const score = (kCount[k] >= target[k] ? -10 : 0) + typeNeed * 2 + topicNeed + Math.random() * .15;
+      if (score > bestScore) { bestScore = score; best = i; }
+    });
+    const [q] = left.splice(best, 1); picked.push(q); kCount[KIND(q)]++; cCount[q.concept] = (cCount[q.concept] || 0) + 1;
+  }
+  /* Order them: open with multiple choice if possible, then never repeat a type back-to-back where avoidable. */
+  const out = [], rest = shuffle(picked);
+  while (rest.length) {
+    const last = out.length ? KIND(out[out.length - 1]) : null;
+    const counts = {}; rest.forEach(q => counts[KIND(q)] = (counts[KIND(q)] || 0) + 1);
+    let options = rest.filter(q => KIND(q) !== last);
+    if (!out.length && rest.some(q => KIND(q) === 'mc')) options = rest.filter(q => KIND(q) === 'mc');
+    if (!options.length) options = rest;
+    const top = Math.max(...options.map(q => counts[KIND(q)]));
+    const q = options.find(o => counts[KIND(o)] === top);
+    rest.splice(rest.indexOf(q), 1); out.push(q);
+  }
+  return out;
+}
+function mixPreview(){
+  const src = pool(); const n = Math.min(S.settings.count, src.length); if (!n) return '';
+  const t = mixTargets(src, n);
+  return ['mc','diagram','order'].filter(k => t[k]).map(k => `<b>${t[k]}</b> ${KIND_LABEL[k]}`).join(' · ');
+}
 function buildQuestions(){
   const T = S.settings.time;
-  return shuffle(pool()).slice(0, S.settings.count).map(src => {
+  return pickBalanced(pool(), S.settings.count).map(src => {
     const q = {...src};
     q.T = T * (q.time || (q.type === 'order' ? 1.5 : 1));
     if (q.type === 'order') {
@@ -1636,7 +1952,7 @@ function reveal(){
   S.played = S.qi + 1;
   if (S.live && S.room) {
     if (S.unsubAns) { S.unsubAns(); S.unsubAns = null; }
-    const sc = {}; S.players.forEach(p => sc[p.id] = {name:p.name, score:p.score, gain:p.gain, frac:S.results[p.id].frac, pts:S.results[p.id].pts});
+    const sc = {}; S.players.forEach(p => sc[p.id] = {name:p.name, icon:p.icon, score:p.score, gain:p.gain, frac:S.results[p.id].frac, pts:S.results[p.id].pts});
     NET.set(`${S.room}/scores`, sc).catch(() => {});
   }
   S.phase = 'reveal'; S.paused = false; render();
@@ -1711,6 +2027,12 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button, [data-concept]'); if (!t) return;
   if (t.id === 'hostPrimary') return hostPrimary();
   if (t.id === 'toggleStudent') { S.showStudent = !S.showStudent; $('#stage').classList.toggle('solo', !S.showStudent); t.textContent = S.showStudent ? 'Hide student view' : 'Show student view'; return; }
+  if (t.dataset.icon) {
+    S.you.icon = okIcon(t.dataset.icon);
+    document.querySelectorAll('.ipick-b').forEach(b => { const on = b.dataset.icon === S.you.icon; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    const nm = document.getElementById('ipickName'); if (nm) nm.textContent = ICONS.find(i => i[0] === S.you.icon)[1];
+    return;
+  }
   if (t.dataset.view) {
     $('#stage').classList.toggle('show-student', t.dataset.view === 'student');
     document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('on', b === t));
@@ -1763,7 +2085,7 @@ function joinYou(){
   let name = $('#nick').value.trim().slice(0,15); if (!name) { $('#nick').focus(); return; }
   if (S.players.length >= MAX_PLAYERS) return;
   const used = new Set(S.players.map(p => p.name)); const base = name; let n = 2; while (used.has(name)) name = base.slice(0,13) + n++;
-  S.you = {joined:true, name}; S.players.push({id:'you', name, bot:false, score:0}); render();
+  S.you = {joined:true, name, icon:S.you.icon}; S.players.push({id:'you', name, icon:S.you.icon, bot:false, score:0}); render();
 }
 
 document.addEventListener('keydown', e => {
@@ -1801,6 +2123,7 @@ function studentLiveView(){
       <div class="join-form">
         <input class="input pin-input" id="pinIn" inputmode="numeric" maxlength="7" placeholder="Game PIN" autocomplete="off" value="${esc(SS.pin)}">
         <input class="input" id="liveNick" maxlength="15" placeholder="Nickname" autocomplete="off" value="${esc(S.you.name)}">
+        ${iconPicker()}
         <button class="btn wide" data-act="joinLive" ${SS.busy ? 'disabled' : ''}>${SS.busy ? 'Joining…' : 'Join'}</button>
         ${SS.err ? `<div class="join-err">${esc(SS.err)}</div>` : ''}
       </div>
@@ -1823,9 +2146,9 @@ async function joinLive(){
     if (Object.keys(players).length >= MAX_PLAYERS) throw {friendly:'This game is full (25 players).'};
     const used = new Set(Object.values(players).map(p => p.name)); const base = name; let n = 2;
     while (used.has(name)) name = base.slice(0, 13) + n++;
-    await net.set(`${room}/players/${net.uid}`, {name, joinedAt:Date.now()});
+    await net.set(`${room}/players/${net.uid}`, {name, icon:okIcon(S.you.icon), joinedAt:Date.now()});
     Object.assign(SS, {joined:true, room, ended:false, removed:false, scores:{}, answered:-1});
-    S.you = {joined:true, name}; S.players = [{id:'you', name, score:0}]; S.phase = 'lobby';
+    S.you = {joined:true, name, icon:S.you.icon}; S.players = [{id:'you', name, icon:S.you.icon, score:0}]; S.phase = 'lobby';
     SS.unsubs = [
       net.on(`${room}/state`, onStudentState),
       net.on(`${room}/scores`, onStudentScores),
@@ -1860,9 +2183,9 @@ function onStudentState(st){
 function syncStudentResults(){
   const me = SS.scores[NET.uid];
   S.results = me ? {you:{frac:me.frac || 0, pts:me.pts || 0}} : {};
-  const list = Object.entries(SS.scores).map(([id, p]) => ({id: id === NET.uid ? 'you' : id, name:p.name, score:p.score || 0, gain:p.gain || 0}));
-  S.players = list.length ? list : [{id:'you', name:S.you.name, score:0}];
-  if (!S.players.find(p => p.id === 'you')) S.players.push({id:'you', name:S.you.name, score:0});
+  const list = Object.entries(SS.scores).map(([id, p]) => ({id: id === NET.uid ? 'you' : id, name:p.name, icon:okIcon(p.icon), score:p.score || 0, gain:p.gain || 0}));
+  S.players = list.length ? list : [{id:'you', name:S.you.name, icon:S.you.icon, score:0}];
+  if (!S.players.find(p => p.id === 'you')) S.players.push({id:'you', name:S.you.name, icon:S.you.icon, score:0});
 }
 function onStudentScores(sc){
   SS.scores = sc || {}; syncStudentResults();
