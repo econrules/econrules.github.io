@@ -1,0 +1,1878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EconRules Live</title>
+<script src="firebase-config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050915; --bg2:#0a1124; --panel:rgba(255,255,255,.045); --panel2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+  --text:#ecf1ff; --muted:#8c9ac0; --dim:#5d6a8f;
+  --blue:#3d7bff; --cyan:#3ad6ff; --good:#2fe0a0; --bad:#ff5d73; --gold:#ffc94d;
+  --c0:#ff5470; --c1:#3d86ff; --c2:#ffad2e; --c3:#1fc79a;
+  --r:18px; --display:'Space Grotesk',Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--text);
+  background:
+    radial-gradient(1100px 600px at 10% -15%,rgba(61,123,255,.28),transparent 60%),
+    radial-gradient(900px 520px at 105% 0%,rgba(58,214,255,.14),transparent 60%),
+    radial-gradient(800px 600px at 50% 120%,rgba(61,123,255,.12),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%);
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input{font:inherit;color:inherit}
+.app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);
+  background:rgba(5,9,21,.6);backdrop-filter:blur(14px);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em}
+.brand-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 6px 20px rgba(61,123,255,.45)}
+.brand-mark svg{width:17px;height:17px}
+.live{font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 8px;border-radius:999px;
+  background:rgba(255,84,112,.14);color:#ff8ea0;border:1px solid rgba(255,84,112,.3);display:inline-flex;align-items:center;gap:6px}
+.live::before{content:"";width:6px;height:6px;border-radius:50%;background:#ff5470;box-shadow:0 0 0 0 rgba(255,84,112,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,84,112,.6)}70%{box-shadow:0 0 0 8px rgba(255,84,112,0)}100%{box-shadow:0 0 0 0 rgba(255,84,112,0)}}
+.spacer{flex:1}
+.pill{font-size:12.5px;color:var(--muted);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.pill b{color:var(--text);font-weight:600}
+.btn-ghost{font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);transition:.2s}
+.btn-ghost:hover{background:var(--panel2);border-color:rgba(255,255,255,.28)}
+
+/* ---------- stage ---------- */
+.stage{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;padding:22px 24px 10px}
+.stage.solo{grid-template-columns:minmax(0,1fr)}
+.stage.solo .device-wrap{display:none}
+.pane-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 10px 4px;display:flex;align-items:center;gap:8px}
+.pane-label svg{width:14px;height:14px}
+.host{position:relative;border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);min-height:calc(100vh - 150px);padding:28px 30px;overflow:hidden}
+.device{position:relative;border-radius:22px;border:1px solid var(--line2);background:#0a0f1f;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden;
+  min-height:calc(100vh - 150px);display:flex;flex-direction:column}
+.device-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03);font-size:12px;color:var(--muted)}
+.device-bar i{width:9px;height:9px;border-radius:50%;background:#2a3350;display:inline-block}
+.device-bar span{margin-left:8px}
+.sv{flex:1;padding:22px 20px;display:flex;flex-direction:column;position:relative}
+footer{text-align:center;font-size:11.5px;color:var(--dim);padding:8px 0 18px;letter-spacing:.04em}
+
+/* ---------- common ---------- */
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+.muted{color:var(--muted)}
+.card{border-radius:var(--r);border:1px solid var(--line);background:var(--panel);padding:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15px;padding:13px 22px;border-radius:13px;
+  background:linear-gradient(135deg,var(--blue),#4f9bff 55%,var(--cyan));color:#fff;box-shadow:0 10px 30px rgba(61,123,255,.38),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .15s,box-shadow .2s,opacity .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 36px rgba(61,123,255,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.sm{font-size:13px;padding:9px 15px;border-radius:10px}
+.btn.wide{width:100%}
+.btn kbd{font:600 11px Inter;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);color:#cfd8f5}
+.chip.dbl{border-color:rgba(255,201,77,.5);background:rgba(255,201,77,.12);color:var(--gold)}
+.chip.hl{border-color:rgba(58,214,255,.35);background:rgba(58,214,255,.08);color:var(--cyan)}
+.fade-in{animation:fadeIn .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+
+/* ---------- setup ---------- */
+.setup{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:22px;align-items:start}
+.setup h1{font-size:34px;margin:6px 0 4px}
+.setup-intro{grid-column:1/-1;margin-bottom:4px}
+.tree{display:flex;flex-direction:column;gap:12px}
+.unit{border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.025);overflow:hidden}
+.unit-head{display:flex;align-items:center;gap:12px;padding:14px 16px;font-weight:600}
+.unit-head .count{margin-left:auto;font-size:12px;color:var(--muted);font-weight:500}
+.unit.off .unit-head{color:var(--dim)}
+.subs{border-top:1px solid var(--line);padding:6px 8px 10px}
+.sub{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:14px}
+.sub .num{font-family:var(--display);font-weight:600;color:var(--muted);width:30px}
+.sub.off{color:var(--dim)}
+.sub.off .num{color:var(--dim)}
+.soon{margin-left:auto;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.concepts{margin:0 0 4px 52px;display:flex;flex-direction:column;gap:2px}
+.concept{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:14px;cursor:pointer;transition:background .15s}
+.concept:hover,.sub.on:hover{background:rgba(255,255,255,.04)}
+.concept .n{margin-left:auto;font-size:12px;color:var(--muted)}
+.hl-tag{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(58,214,255,.1);color:var(--cyan);border:1px solid rgba(58,214,255,.25)}
+.cb{appearance:none;-webkit-appearance:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line2);background:rgba(255,255,255,.03);display:grid;place-items:center;cursor:pointer;flex:none;transition:.15s;margin:0}
+.cb:checked,.cb:indeterminate{background:linear-gradient(135deg,var(--blue),var(--cyan));border-color:transparent}
+.cb:checked::after{content:"";width:10px;height:5px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.cb:indeterminate::after{content:"";width:10px;height:2.5px;background:#fff;border-radius:2px}
+.cb:disabled{opacity:.3;cursor:not-allowed}
+.settings{position:sticky;top:90px;display:flex;flex-direction:column;gap:20px}
+.field label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#cdd6f3;margin-bottom:10px}
+.field label span{color:var(--muted);font-weight:500}
+.seg{display:flex;padding:4px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.seg button{flex:1;padding:9px 0;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--muted);transition:.2s}
+.seg button.on{background:var(--panel2);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--blue) var(--p,50%),rgba(255,255,255,.1) var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(61,123,255,.6);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:0;cursor:pointer}
+.summary{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:80px;padding:12px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.stat b{display:block;font-family:var(--display);font-size:24px}
+.stat small{color:var(--muted);font-size:11.5px}
+
+/* ---------- lobby ---------- */
+.lobby{display:flex;flex-direction:column;align-items:center;text-align:center;height:100%}
+.pin-card{margin-top:10px;padding:22px 40px;border-radius:22px;background:linear-gradient(135deg,rgba(61,123,255,.18),rgba(58,214,255,.08));border:1px solid rgba(61,123,255,.35);box-shadow:0 20px 60px rgba(61,123,255,.2)}
+.pin-card small{font-size:13px;color:#b7c6ef;letter-spacing:.06em}
+.pin{font-family:var(--display);font-size:68px;font-weight:700;letter-spacing:.08em;line-height:1.05;background:linear-gradient(180deg,#fff,#a9c4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lobby-meta{display:flex;align-items:center;gap:16px;margin:26px 0 18px;width:100%}
+.lobby-meta .count{font-family:var(--display);font-size:22px;font-weight:600;display:flex;align-items:center;gap:10px}
+.lobby-meta .count svg{width:22px;height:22px;color:var(--cyan)}
+.roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start;width:100%;min-height:160px}
+.pchip{display:inline-flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-weight:600;font-size:14.5px}
+.pchip.new{animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}
+.still .fade-in{animation:none}
+.pchip.me{border-color:rgba(58,214,255,.6);background:rgba(58,214,255,.12);box-shadow:0 0 0 3px rgba(58,214,255,.12)}
+.x{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;color:var(--dim);transition:.15s}
+.x:hover{background:rgba(255,84,112,.18);color:#ff8ea0}
+.x svg{width:12px;height:12px}
+.empty{color:var(--dim);font-size:14px;margin-top:30px}
+
+/* ---------- question ---------- */
+.qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qhead .ctrl{margin-left:auto;display:flex;gap:8px}
+.icon-btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:8px 13px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);transition:.15s}
+.icon-btn:hover{background:var(--panel2)}
+.icon-btn svg{width:14px;height:14px}
+.progress{height:4px;border-radius:4px;background:rgba(255,255,255,.07);margin:16px 0 0;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:4px;transition:width .4s}
+.qtext{font-size:clamp(24px,2.5vw,36px);line-height:1.2;text-align:center;margin:26px auto 22px;max-width:980px;font-weight:600}
+.qmid{display:grid;grid-template-columns:120px minmax(0,1fr) 120px;align-items:center;gap:20px;margin-bottom:22px}
+.qmid.nodiag{grid-template-columns:120px 1fr 120px;min-height:150px}
+.ring{position:relative;width:112px;height:112px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8}
+.ring .track{stroke:rgba(255,255,255,.08)}
+.ring .bar{stroke:url(#ringGrad);stroke-linecap:round;transition:stroke-dashoffset .1s linear}
+.ring .lbl{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:36px;font-weight:700}
+.ring.low .lbl{color:var(--bad)}
+.answered{text-align:center}
+.answered b{display:block;font-family:var(--display);font-size:42px;line-height:1}
+.answered small{color:var(--muted);font-size:13px}
+.diag-card{justify-self:center;width:min(100%,480px);border-radius:18px;border:1px solid var(--line);background:rgba(0,0,0,.25);padding:12px 14px 6px}
+.diag{width:100%;height:auto;display:block}
+.diag .ax{stroke:#b4c0e2;stroke-width:2.5;fill:none}
+.diag .axh{fill:#a9b6da}
+.diag text{font-family:Inter,sans-serif;font-size:20px;fill:#e2e8fa;font-weight:700}
+.diag .sb{font-size:.72em}
+.diag.mini text{font-size:27px}
+.diag.mini .ln{stroke-width:5}
+.diag.mini .guide{stroke-width:2}
+.diag .guide{stroke:#8f9dc4;stroke-width:1.6;stroke-dasharray:5 5}
+.diag .ln{fill:none;stroke-width:4;stroke-linecap:round}
+.diag .d{stroke:var(--cyan)} .diag text.d{fill:var(--cyan);stroke:none}
+.diag .s{stroke:var(--gold)} .diag text.s{fill:var(--gold);stroke:none}
+.diag .old{opacity:.4}
+.diag .pc{stroke:#ff8ea0} .diag text.pc{fill:#ff8ea0;stroke:none}
+.diag .arr{stroke:#fff;stroke-width:2.5;fill:none}
+.diag .arrh{fill:#fff}
+.diag .dot{fill:#fff}
+.diag .mc{stroke:#ff7b93} .diag text.mc{fill:#ff7b93;stroke:none}
+.diag .ac{stroke:#4be3a8} .diag text.ac{fill:#4be3a8;stroke:none}
+.diag .av{stroke:#c3a6ff} .diag text.av{fill:#c3a6ff;stroke:none}
+.diag .mr{stroke:#7aa8ff} .diag text.mr{fill:#7aa8ff;stroke:none}
+.diag .mxc{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.3);stroke-width:1.5}
+.diag .ar{fill:rgba(122,168,255,.13);stroke:rgba(255,255,255,.28);stroke-width:1.2}
+.diag .ar2{fill:rgba(122,168,255,.22)}
+.diag text.al{fill:#fff;font-size:22px;font-weight:800;paint-order:stroke;stroke:#0a1124;stroke-width:4px;stroke-linejoin:round}
+.diag.mini text.al{font-size:28px}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opts.four{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.opt{position:relative;display:flex;align-items:center;gap:16px;min-height:88px;padding:18px 22px;border-radius:16px;font-size:clamp(16px,1.35vw,21px);font-weight:600;line-height:1.25;color:#fff;
+  background:var(--oc);box-shadow:inset 0 -5px 0 rgba(0,0,0,.18),0 10px 28px color-mix(in srgb,var(--oc) 30%,transparent);transition:opacity .35s,transform .35s,filter .35s;text-align:left}
+.opt .shape{flex:none;width:30px;height:30px;fill:#fff;opacity:.95}
+.opt.o0{--oc:var(--c0)} .opt.o1{--oc:var(--c1)} .opt.o2{--oc:var(--c2)} .opt.o3{--oc:var(--c3)}
+.opt.dgo{flex-direction:column;align-items:stretch;gap:8px;padding:12px 12px 10px}
+.opt.dgo .top{display:flex;align-items:center;gap:10px}
+.opt.dgo .shape{width:22px;height:22px}
+.opt.dgo .mini{background:rgba(5,9,21,.82);border-radius:11px;padding:6px 6px 0}
+.opt.dim{opacity:.22;filter:saturate(.4)}
+.opt.right{transform:scale(1.02);box-shadow:0 0 0 3px #fff,0 16px 40px color-mix(in srgb,var(--oc) 45%,transparent)}
+.opt .tick{margin-left:auto;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}
+.opt .tick svg{width:18px;height:18px;stroke:var(--oc)}
+.opt.dgo .tick{position:absolute;top:10px;right:10px;width:28px;height:28px}
+
+.olist{display:flex;flex-direction:column;gap:10px;max-width:820px;margin:0 auto;width:100%}
+.oitem{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);font-size:18px;font-weight:600;border-left:5px solid var(--oc,var(--blue))}
+.oitem .badge{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:var(--display);font-size:15px;background:rgba(255,255,255,.08);flex:none}
+.oitem.ok{border-color:rgba(47,224,160,.4);border-left-color:var(--good);background:rgba(47,224,160,.07)}
+.oitem.ok .badge{background:var(--good);color:#04241a}
+
+/* ---------- get ready ---------- */
+.ready{height:100%;min-height:calc(100vh - 210px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+.ready .big{font-size:64px;font-family:var(--display);font-weight:700}
+.ready .bar{width:min(420px,80%);height:8px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}
+.ready .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));animation:fill 2.4s linear forwards}
+@keyframes fill{to{width:100%}}
+.double-burst{font-family:var(--display);font-weight:700;font-size:44px;color:var(--gold);text-shadow:0 0 40px rgba(255,201,77,.6);animation:burst 1.1s cubic-bezier(.2,1.4,.4,1) both}
+.double-burst small{display:block;font-size:15px;letter-spacing:.2em;color:#ffe2a0;text-shadow:none;font-family:Inter}
+@keyframes burst{0%{opacity:0;transform:scale(.3) rotate(-8deg)}60%{opacity:1;transform:scale(1.12) rotate(2deg)}100%{transform:scale(1)}}
+
+/* ---------- reveal ---------- */
+.reveal-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-bottom:20px}
+.bars{display:flex;align-items:flex-end;justify-content:center;gap:18px;height:170px;padding:10px 10px 0}
+.bcol{display:flex;flex-direction:column;align-items:center;gap:6px;width:64px;height:100%;justify-content:flex-end}
+.bcol .v{font-family:var(--display);font-weight:700;font-size:18px}
+.bcol .b{width:100%;border-radius:10px 10px 4px 4px;background:var(--oc);min-height:6px;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.bcol .k{display:flex;align-items:center;gap:4px;height:22px}
+.bcol .k svg{width:16px;height:16px;fill:var(--oc)}
+.bcol .k .ok{width:18px;height:18px;stroke:var(--good);fill:none}
+.bcol.o0{--oc:var(--c0)} .bcol.o1{--oc:var(--c1)} .bcol.o2{--oc:var(--c2)} .bcol.o3{--oc:var(--c3)}
+.bcol.lose .b{opacity:.35}
+.why{display:flex;gap:14px;align-items:flex-start;border-radius:16px;padding:18px 20px;background:linear-gradient(135deg,rgba(47,224,160,.12),rgba(58,214,255,.06));border:1px solid rgba(47,224,160,.3)}
+.why .ic{flex:none;width:36px;height:36px;border-radius:11px;background:rgba(47,224,160,.18);display:grid;place-items:center;color:var(--good)}
+.why .ic svg{width:19px;height:19px}
+.why h3{font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--good);margin-bottom:4px;font-family:Inter}
+.why p{margin:0;font-size:17px;line-height:1.45}
+.why .rw{margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.12)}
+.why .rw h3{color:var(--cyan);display:flex;align-items:center;gap:7px}
+.why .rw h3 svg{width:15px;height:15px}
+.why .rw p{font-size:15.5px;color:#d5def6}
+.s-rw{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+.s-rw b{color:var(--cyan)}
+.ostats{display:flex;gap:12px;flex-wrap:wrap}
+.ostats .stat b{font-size:30px}
+
+/* ---------- leaderboard ---------- */
+.lb{max-width:760px;margin:20px auto 0;display:flex;flex-direction:column;gap:10px}
+.lbrow{display:flex;align-items:center;gap:16px;padding:14px 16px 14px 18px;border-radius:15px;background:var(--panel2);border:1px solid var(--line);font-weight:600;font-size:18px;animation:fadeIn .5s both}
+.lbrow .rk{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:var(--display);background:rgba(255,255,255,.08);flex:none}
+.lbrow.r1 .rk{background:linear-gradient(135deg,#ffd76a,#ffab2e);color:#3a2500}
+.lbrow.r2 .rk{background:linear-gradient(135deg,#e5ecff,#9fb0d8);color:#1b2440}
+.lbrow.r3 .rk{background:linear-gradient(135deg,#ffb38a,#d9783f);color:#3b1700}
+.lbrow.me{border-color:rgba(58,214,255,.55);background:rgba(58,214,255,.1)}
+.lbrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbrow .gain{font-size:13px;color:var(--good);font-weight:600}
+.lbrow .mv{width:22px;text-align:center;font-size:13px}
+.lbrow .mv.up{color:var(--good)} .lbrow .mv.dn{color:var(--bad)}
+.lbrow .sc{font-family:var(--display);font-size:22px;min-width:84px;text-align:right}
+.lbgap{text-align:center;color:var(--dim);letter-spacing:.3em}
+
+/* ---------- podium ---------- */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:36px auto 10px;height:330px}
+.pcol{display:flex;flex-direction:column;align-items:center;width:min(200px,28%)}
+.pcol .pn{font-family:var(--display);font-weight:700;font-size:21px;margin-bottom:4px;text-align:center;opacity:0;animation:fadeIn .5s both}
+.pcol .ps{color:var(--muted);font-size:14px;margin-bottom:10px;opacity:0;animation:fadeIn .5s both}
+.pcol .blk{width:100%;border-radius:16px 16px 6px 6px;display:flex;justify-content:center;padding-top:14px;font-family:var(--display);font-size:50px;font-weight:700;transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.9,.2,1) both;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.pcol.p1 .blk{height:230px;background:linear-gradient(180deg,#ffd76a,#ff9f2e);color:#4a2c00}
+.pcol.p2 .blk{height:165px;background:linear-gradient(180deg,#e9efff,#8ea2d6);color:#18213d}
+.pcol.p3 .blk{height:115px;background:linear-gradient(180deg,#ffbd94,#cf6b33);color:#3b1700}
+.pcol.p2 .blk,.pcol.p2 .pn,.pcol.p2 .ps{animation-delay:.5s}
+.pcol.p3 .blk,.pcol.p3 .pn,.pcol.p3 .ps{animation-delay:.1s}
+.pcol.p1 .blk,.pcol.p1 .pn,.pcol.p1 .ps{animation-delay:1s}
+.rest{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:22px}
+.rest div{display:flex;gap:10px;padding:9px 12px;border-radius:11px;background:var(--panel);border:1px solid var(--line);font-size:13.5px}
+.rest div.me{border-color:rgba(58,214,255,.55)}
+.rest b{color:var(--muted);width:22px} .rest span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .rest em{font-style:normal;color:var(--muted)}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* ---------- pause ---------- */
+.paused{position:absolute;inset:0;background:rgba(5,9,21,.72);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;animation:fadeIn .25s both}
+.paused h2{font-size:40px}
+.end-dialog{text-align:center;padding:20px}
+.end-dialog h2{font-size:34px}
+.end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.icon-btn.end{border-color:rgba(255,84,112,.35);color:#ffb3bf}
+.icon-btn.end:hover{background:rgba(255,84,112,.14)}
+
+/* ---------- student ---------- */
+.sv h2{font-size:24px}
+.s-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}
+.s-logo{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 12px 34px rgba(61,123,255,.45)}
+.s-logo svg{width:30px;height:30px}
+.input{width:100%;padding:14px 16px;border-radius:13px;border:1px solid var(--line2);background:rgba(255,255,255,.04);font-size:17px;font-weight:600;outline:none;transition:.2s;text-align:center}
+.input:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(58,214,255,.15)}
+.join-form{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.s-top{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px}
+.s-top b{color:var(--text)}
+.s-top .sp{flex:1}
+.s-timer{height:5px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:14px}
+.s-timer i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .1s linear}
+.s-q{font-size:16.5px;font-weight:600;line-height:1.35;margin:0 0 14px}
+.s-diag{border-radius:12px;background:rgba(0,0,0,.3);border:1px solid var(--line);padding:6px 8px 2px;margin-bottom:14px}
+.s-opts{display:grid;grid-template-columns:1fr;gap:9px}
+.s-opts.grid2{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.sopt{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:13px;background:var(--oc);color:#fff;font-weight:600;font-size:14.5px;text-align:left;line-height:1.25;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18);transition:transform .12s,filter .15s}
+.sopt:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.sopt .shape{width:20px;height:20px;fill:#fff;flex:none}
+.sopt kbd{margin-left:auto;font:600 11px Inter;padding:2px 6px;border-radius:5px;background:rgba(0,0,0,.2)}
+.sopt.o0{--oc:var(--c0)} .sopt.o1{--oc:var(--c1)} .sopt.o2{--oc:var(--c2)} .sopt.o3{--oc:var(--c3)}
+.sopt.dgo{flex-direction:column;align-items:stretch;gap:6px;padding:8px}
+.sopt.dgo .top{display:flex;align-items:center;gap:8px}
+.sopt.dgo .mini{background:rgba(5,9,21,.82);border-radius:9px;padding:3px 3px 0}
+.slist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.sitem{display:flex;align-items:center;gap:10px;padding:11px 10px 11px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-size:14px;font-weight:600;cursor:grab;user-select:none;transition:transform .15s,border-color .15s,background .15s;outline:none}
+.sitem:focus-visible{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(58,214,255,.2)}
+.sitem.dragging{opacity:.4}
+.sitem.over{border-color:var(--cyan);background:rgba(58,214,255,.1)}
+.sitem .grip{color:var(--dim);flex:none}
+.sitem .grip svg{width:14px;height:14px}
+.sitem .num{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-family:var(--display);font-size:13px;flex:none}
+.sitem .t{flex:1}
+.sitem .mvb{display:flex;flex-direction:column;gap:2px}
+.sitem .mvb button{width:24px;height:18px;border-radius:5px;display:grid;place-items:center;color:var(--muted);background:rgba(255,255,255,.05)}
+.sitem .mvb button:hover{color:#fff;background:rgba(255,255,255,.12)}
+.sitem .mvb button:disabled{opacity:.2;cursor:default}
+.sitem .mvb svg{width:10px;height:10px}
+.hint{font-size:11.5px;color:var(--dim);text-align:center;margin-top:8px}
+.result-ic{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;animation:pop .55s cubic-bezier(.2,1.4,.4,1) both}
+.result-ic svg{width:46px;height:46px;stroke:#fff;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.result-ic.ok{background:linear-gradient(135deg,#2fe0a0,#17b884);box-shadow:0 14px 40px rgba(47,224,160,.45)}
+.result-ic.part{background:linear-gradient(135deg,#ffc94d,#ff9f2e);box-shadow:0 14px 40px rgba(255,201,77,.4)}
+.result-ic.no{background:linear-gradient(135deg,#ff6b81,#e33d5a);box-shadow:0 14px 40px rgba(255,84,112,.4)}
+.pts{font-family:var(--display);font-size:38px;font-weight:700}
+.s-why{font-size:13.5px;line-height:1.45;color:#c9d3f0;padding:12px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);text-align:left;width:100%}
+.s-rank{font-family:var(--display);font-size:56px;font-weight:700;line-height:1;background:linear-gradient(180deg,#fff,#9fbaff);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.view-tabs{display:none;width:250px}
+body.student-mode .stage{grid-template-columns:minmax(0,560px);justify-content:center}
+body.student-mode .host-wrap,body.student-mode #toggleStudent,body.student-mode #viewTabs,body.student-mode #modePill,body.student-mode .device-wrap .pane-label,body.student-mode .device-bar{display:none!important}
+body.student-mode .stage .device-wrap{display:block!important}
+body.student-mode .device{min-height:calc(100vh - 140px);border-radius:24px}
+body.student-mode .sv{padding:28px 24px}
+.pin-input{font-family:var(--display);font-size:24px;letter-spacing:.2em}
+.join-err{padding:11px 13px;border-radius:12px;background:rgba(255,84,112,.12);border:1px solid rgba(255,84,112,.35);color:#ffb3bf;font-size:14px;text-align:left}
+.host-link{margin-top:18px;font-size:13px;color:var(--muted);text-decoration:none}
+.host-link:hover{color:var(--cyan)}
+.join-url{font-family:var(--display);font-weight:700;color:#fff;word-break:break-all}
+.net-err{max-width:620px;margin:60px auto;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.net-err p{color:#ffb3bf;margin:0;line-height:1.5}
+.view-tabs button{position:relative}
+.view-tabs .nd{position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(58,214,255,.6);animation:pulse 1.6s infinite;display:none}
+.view-tabs.need .nd{display:block}
+@media (max-width:1100px){
+  .stage{grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+  .host{padding:22px 20px}
+  .setup{grid-template-columns:1fr}
+  .settings{position:static}
+  .reveal-row{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .stage{grid-template-columns:1fr}
+  .stage .device-wrap{display:none}
+  .stage.show-student .host-wrap{display:none}
+  .stage.show-student .device-wrap{display:block}
+  .device{min-height:calc(100vh - 150px)}
+  .view-tabs{display:flex}
+  #toggleStudent,#modePill{display:none}
+}
+@media (max-width:640px){
+  .host{padding:20px 16px}
+  .opts{grid-template-columns:1fr}
+  .qmid,.qmid.nodiag{grid-template-columns:1fr 1fr}
+  .qmid .diag-card{grid-column:1/-1;order:-1}
+  .pin{font-size:48px}
+  .topbar{padding:12px 16px;flex-wrap:wrap}
+  .stage{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ad6ff"/><stop offset="1" stop-color="#3d7bff"/></linearGradient></defs></svg>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 10 11l4 4 6-8"/><path d="M15 7h5v5"/></svg></div>
+      EconRules <span class="live">LIVE</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="pill" id="modePill">Practice mode · <b>bots</b> fill the room</div>
+    <div class="seg view-tabs" id="viewTabs"><button data-view="host" class="on">Host screen</button><button data-view="student">Student<i class="nd"></i></button></div>
+    <button class="btn-ghost" id="toggleStudent">Hide student view</button>
+  </header>
+  <main class="stage" id="stage">
+    <div class="host-wrap">
+      <div class="pane-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Host screen · projector</div>
+      <section class="host" id="host"></section>
+    </div>
+    <div class="device-wrap">
+      <div class="pane-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M1 20h22"/></svg>Student laptop · you</div>
+      <aside class="device"><div class="device-bar"><i></i><i></i><i></i><span>econrules · play</span></div><div class="sv" id="student"></div></aside>
+    </div>
+  </main>
+  <footer>EconRules Live · A Friendly Fire Production</footer>
+</div>
+
+<script>
+/* =========================================================
+   DATA — IB Economics syllabus structure & question bank
+   ========================================================= */
+const SYLLABUS = [
+  {id:'U1', name:'Unit 1 · Introduction to economics', subs:[]},
+  {id:'U2', name:'Unit 2 · Microeconomics', subs:[
+    {id:'2.1', name:'Demand', concepts:[]},
+    {id:'2.2', name:'Supply', concepts:[]},
+    {id:'2.3', name:'Competitive market equilibrium', concepts:[]},
+    {id:'2.4', name:'Critique of the maximizing behaviour of consumers and producers', concepts:[]},
+    {id:'2.5', name:'Elasticity of demand', concepts:[
+      {id:'PED', name:'Price elasticity of demand (PED)', short:'PED'},
+      {id:'YED', name:'Income elasticity of demand (YED)', short:'YED'}]},
+    {id:'2.6', name:'Elasticity of supply', concepts:[
+      {id:'PES', name:'Price elasticity of supply (PES)', short:'PES'}]},
+    {id:'2.7', name:'Role of government in microeconomics', concepts:[
+      {id:'TAX', name:'Indirect taxes', short:'Indirect tax'},
+      {id:'SUB', name:'Subsidies', short:'Subsidies'},
+      {id:'MAXP', name:'Maximum prices (price ceilings)', short:'Max price'},
+      {id:'MINP', name:'Minimum prices (price floors)', short:'Min price'},
+      {id:'OTHGOV', name:'Other policies: nudges, direct provision, regulation, legislation, command and control, buffer stocks', short:'Other policies'}]},
+    {id:'2.8', name:'Market failure — externalities and common pool resources', concepts:[]},
+    {id:'2.9', name:'Market failure — public goods', concepts:[]},
+    {id:'2.10', name:'Market failure — asymmetric information', concepts:[], hl:true},
+    {id:'2.11', name:'Market failure — market power', hl:true, concepts:[
+      {id:'FPROD', name:'Production: total, average and marginal product', short:'Production'},
+      {id:'FSRC', name:'Short-run costs: fixed, variable, average and marginal', short:'Short-run costs'},
+      {id:'FLRC', name:'Long-run costs: economies and diseconomies of scale', short:'Long-run costs'},
+      {id:'FREV', name:'Revenue: total, average and marginal', short:'Revenue'},
+      {id:'FPROF', name:'Profit, loss and the goals of firms', short:'Profit & goals'},
+      {id:'FPC', name:'Perfect competition', short:'Perfect competition'},
+      {id:'FMON', name:'Monopoly', short:'Monopoly'},
+      {id:'FMONC', name:'Monopolistic competition', short:'Monopolistic comp.'},
+      {id:'FOLIG', name:'Oligopoly and game theory', short:'Oligopoly'},
+      {id:'FEFF', name:'Efficiency, market power and government responses', short:'Market power & policy'}]},
+    {id:'2.12', name:'The market’s inability to achieve equity', concepts:[]},
+  ]},
+  {id:'U3', name:'Unit 3 · Macroeconomics', subs:[]},
+  {id:'U4', name:'Unit 4 · The global economy', subs:[]},
+];
+
+/* type: mc | diagram (diagram in the question) | diagram-options (answers are diagrams) | order */
+const BANK = [
+  // ---------- PED ----------
+  {id:'ped1', concept:'PED', level:'SL', type:'mc', q:'A good has a PED of −0.4. Demand for this good is…',
+   options:['Price inelastic','Price elastic','Unit elastic','Perfectly elastic'], answer:0,
+   exp:'|PED| is less than 1, so quantity demanded changes by a smaller percentage than price.'},
+  {id:'ped2', concept:'PED', level:'SL', type:'mc', q:'A firm’s product has price inelastic demand. To increase total revenue, the firm should…',
+   options:['Raise its price','Lower its price','Keep its price the same','Increase its output'], answer:0,
+   exp:'With inelastic demand, the % fall in quantity demanded is smaller than the % rise in price, so total revenue (P × Q) rises.'},
+  {id:'ped3', concept:'PED', level:'SL', type:'mc', q:'Which factor makes demand for a good more price elastic?',
+   options:['It has many close substitutes','It is a necessity','It takes up a small share of income','Consumers buy it out of habit'], answer:0,
+   exp:'Close substitutes let consumers switch easily when the price rises, so quantity demanded responds strongly.'},
+  {id:'ped4', concept:'PED', level:'HL', type:'mc', double:true, time:1.5,
+   q:'The price of a good rises from $10 to $12 and quantity demanded falls from 100 to 90 units. What is the PED?',
+   options:['−0.5','−2.0','−0.2','−5.0'], answer:0,
+   exp:'%ΔQd = −10 ÷ 100 = −10%. %ΔP = 2 ÷ 10 = +20%. PED = −10% ÷ 20% = −0.5.'},
+  {id:'ped5', concept:'PED', level:'SL', type:'diagram', diagram:'pedCompare',
+   q:'D₁ and D₂ pass through the same point. At P₁, which demand curve is relatively more price elastic?',
+   options:['D₂, the flatter curve','D₁, the steeper curve','Both are equally elastic','You cannot tell from a diagram'], answer:0,
+   exp:'From the same starting point, a given price change causes a bigger change in quantity demanded on the flatter curve.'},
+  {id:'ped6', concept:'PED', level:'SL', type:'diagram', diagram:'dVertical',
+   q:'What is the PED of this demand curve?',
+   options:['0 — perfectly inelastic','1 — unit elastic','Infinity — perfectly elastic','Between 0 and 1'], answer:0,
+   exp:'Quantity demanded does not change at all when price changes, so PED = 0.'},
+  {id:'ped7', concept:'PED', level:'SL', type:'order', q:'Order these PED values from most price elastic to least price elastic.',
+   items:['−3.0','−1.5','−1.0','−0.4','0'],
+   exp:'Ignore the sign and look at the size: the bigger |PED|, the more price elastic the demand.'},
+  {id:'ped8', concept:'PED', level:'SL', type:'order', double:true, q:'Put this chain of reasoning in order.',
+   items:['The product has many close substitutes','Demand for the product is price elastic','The firm lowers its price','Quantity demanded rises by a larger percentage','Total revenue rises'],
+   exp:'Substitutes make demand price elastic. With elastic demand, a price cut raises revenue because the % rise in Qd outweighs the % fall in price.'},
+  // ---------- YED ----------
+  {id:'yed1', concept:'YED', level:'SL', type:'mc', q:'A good has a YED of −0.8. What type of good is it?',
+   options:['An inferior good','A normal good (necessity)','A normal good (luxury)','A substitute good'], answer:0,
+   exp:'A negative YED means demand falls as income rises, which defines an inferior good.'},
+  {id:'yed2', concept:'YED', level:'SL', type:'mc', q:'A good has a YED of +2.5. It is best described as…',
+   options:['A luxury: income elastic normal good','A necessity: income inelastic normal good','An inferior good','A good with price elastic demand'], answer:0,
+   exp:'YED is greater than 1, so demand rises proportionately more than income: an income elastic (luxury) good.'},
+  {id:'yed3', concept:'YED', level:'HL', type:'mc', time:1.5,
+   q:'Average income rises by 5% and demand for restaurant meals rises by 10%. What is the YED?',
+   options:['+2.0','+0.5','−2.0','+5.0'], answer:0,
+   exp:'YED = %ΔQd ÷ %ΔY = 10% ÷ 5% = +2.0.'},
+  {id:'yed4', concept:'YED', level:'SL', type:'mc', q:'Why do the incomes of primary producers, such as farmers, tend to grow more slowly than the economy as a whole?',
+   options:['Primary products have a low YED','Primary products have a high YED','Primary products are inferior goods','Primary products have a high PED'], answer:0,
+   exp:'As incomes rise, spending on food rises only a little (YED between 0 and 1), so farmers receive a shrinking share of total spending.'},
+  {id:'yed5', concept:'YED', level:'SL', type:'diagram-options', double:true, time:1.25,
+   q:'Incomes rise. Which diagram shows the effect on the market for an inferior good?',
+   optionDiagrams:['dRight','dLeft','sLeft','sRight'], answer:1,
+   exp:'For an inferior good, higher income means lower demand at every price, so the demand curve shifts left.'},
+  {id:'yed6', concept:'YED', level:'SL', type:'order', q:'Order these goods from most income elastic to least income elastic.',
+   items:['Overseas holidays (YED +3.0)','Restaurant meals (YED +1.2)','Bread (YED +0.3)','Instant noodles (YED −0.6)'],
+   exp:'Luxuries have YED above 1, necessities between 0 and 1, and inferior goods below 0.'},
+  // ---------- PES ----------
+  {id:'pes1', concept:'PES', level:'SL', type:'mc', q:'Which of these makes supply more price elastic?',
+   options:['Firms have plenty of spare capacity','Production takes a long time','The good cannot be stored','Factors of production are immobile'], answer:0,
+   exp:'Spare capacity means firms can raise output quickly when the price rises.'},
+  {id:'pes2', concept:'PES', level:'SL', type:'mc', q:'Why is the supply of agricultural products usually price inelastic in the short run?',
+   options:['Crops take time to grow','Farmers have many substitutes','Demand for food is price inelastic','Governments set farm prices'], answer:0,
+   exp:'Time lags in production mean farmers cannot quickly increase output when the price rises.'},
+  {id:'pes3', concept:'PES', level:'HL', type:'mc', time:1.5,
+   q:'The price of a good rises by 20% and quantity supplied rises by 10%. What is the PES?',
+   options:['0.5','2.0','−0.5','0.2'], answer:0,
+   exp:'PES = %ΔQs ÷ %ΔP = 10% ÷ 20% = 0.5, so supply is price inelastic.'},
+  {id:'pes4', concept:'PES', level:'SL', type:'diagram', diagram:'sOrigin', double:true,
+   q:'This straight-line supply curve starts at the origin. What is its PES?',
+   options:['Exactly 1','0','Between 0 and 1','Infinity'], answer:0,
+   exp:'Any straight-line supply curve through the origin has PES = 1 at every point, whatever its slope.'},
+  {id:'pes5', concept:'PES', level:'SL', type:'diagram', diagram:'sVertical',
+   q:'Which situation is best shown by this supply curve?',
+   options:['Seats in a stadium for tonight’s match','Bottled water from a factory with spare capacity','Downloads of a music app','T-shirts from a large clothing firm'], answer:0,
+   exp:'The number of seats is fixed for tonight, so quantity supplied cannot respond to price: PES = 0.'},
+  {id:'pes6', concept:'PES', level:'SL', type:'diagram-options', time:1.25,
+   q:'Which diagram shows perfectly elastic supply?',
+   optionDiagrams:['sHoriz','sVertical','sOrigin','sQaxis'], answer:0,
+   exp:'A horizontal supply curve means firms will supply any quantity at that price, so PES = infinity.'},
+  {id:'pes7', concept:'PES', level:'SL', type:'order', q:'Order these time periods from least elastic supply to most elastic supply.',
+   items:['Today (output is fixed)','Short run (some factors fixed)','Long run (all factors variable)'],
+   exp:'The more time firms have to adjust their factors of production, the more elastic supply becomes.'},
+
+  // ================= 2.7 ROLE OF GOVERNMENT =================
+  // ---------- Indirect taxes ----------
+  {id:'tax1', concept:'TAX', level:'SL', type:'mc', q:'An indirect tax is a tax on…',
+   options:['Spending on goods and services','People’s incomes','Firms’ profits','Wealth and property'], answer:0,
+   exp:'Indirect taxes (such as VAT or excise taxes) are placed on spending on goods and services and collected through firms.'},
+  {id:'tax2', concept:'TAX', level:'SL', type:'diagram', diagram:'taxSpecific',
+   q:'A specific (per-unit) tax is imposed. What does the vertical distance between S and S+tax show?',
+   options:['The tax per unit','The total tax revenue','The consumer burden only','The fall in quantity'], answer:0,
+   exp:'A specific tax adds the same amount to costs at every output, so supply shifts up by exactly the tax per unit (Pc − Pp).'},
+  {id:'tax3', concept:'TAX', level:'SL', type:'diagram-options', time:1.25,
+   q:'Which diagram shows an ad valorem (percentage) tax?',
+   optionDiagrams:['taxAdval','taxSpecific','subsidy','dLeft'], answer:0,
+   exp:'An ad valorem tax is a percentage of price, so the tax per unit grows as price rises and the curves move further apart.'},
+  {id:'tax4', concept:'TAX', level:'SL', type:'mc', q:'Why do governments impose indirect taxes?',
+   options:['To raise revenue and reduce consumption of demerit goods','To increase consumption of merit goods','To lower prices for consumers','To increase producers’ revenue'], answer:0,
+   exp:'Indirect taxes raise government revenue and, by raising prices, discourage consumption of goods such as cigarettes and alcohol.'},
+  {id:'tax5', concept:'TAX', level:'SL', type:'diagram', diagram:'taxInelastic', double:true,
+   q:'Demand for this good is price inelastic. Who bears most of the tax burden?',
+   options:['Consumers','Producers','It is shared equally','The government'], answer:0,
+   exp:'With inelastic demand, the price consumers pay (Pc) rises by most of the tax, while the price producers keep (Pp) falls only a little.'},
+  {id:'tax6', concept:'TAX', level:'SL', type:'mc', q:'A government wants a tax that raises a lot of revenue. It should tax goods whose demand is…',
+   options:['Price inelastic','Price elastic','Income elastic','Perfectly elastic'], answer:0,
+   exp:'When demand is price inelastic, quantity falls only a little after the tax, so the tax base (and revenue) stays large.'},
+  {id:'tax7', concept:'TAX', level:'HL', type:'mc', double:true, time:1.5,
+   q:'A $2 per-unit tax raises the price consumers pay from $5 to $6.50. 400 units are now sold. How much tax revenue does the government collect?',
+   options:['$800','$600','$200','$2,600'], answer:0,
+   exp:'Tax revenue = tax per unit × quantity sold = $2 × 400 = $800.'},
+  {id:'tax8', concept:'TAX', level:'HL', type:'mc', time:1.5,
+   q:'A $2 per-unit tax raises the price consumers pay from $5 to $6.50. What share of the tax is paid by consumers?',
+   options:['75%','25%','50%','100%'], answer:0,
+   exp:'Consumers pay $1.50 more out of the $2 tax: 1.5 ÷ 2 = 75%. Producers bear the other $0.50 (25%).'},
+  {id:'tax9', concept:'TAX', level:'SL', type:'order', double:true, q:'An indirect tax is placed on cigarettes. Put the effects in order.',
+   items:['Firms’ costs of supplying cigarettes rise','Supply shifts up by the amount of the tax','The price paid by consumers rises','Quantity demanded falls','Consumption of the demerit good falls'],
+   exp:'The tax raises costs, shifting supply up; the higher price leads to a movement along demand to a lower quantity.'},
+  {id:'tax10', concept:'TAX', level:'SL', type:'mc', q:'Why are indirect taxes often described as regressive?',
+   options:['Low-income households pay a larger share of their income in tax','High-income households pay more tax in total','They are only paid by firms','They fall as incomes rise'], answer:0,
+   exp:'Everyone pays the same tax on a good, so it takes a bigger proportion of a low income than a high income.'},
+  {id:'tax11', concept:'TAX', level:'SL', type:'mc', q:'What does “tax incidence” mean?',
+   options:['How the tax burden is split between consumers and producers','The total revenue the tax raises','The rate at which a good is taxed','How often the tax is collected'], answer:0,
+   exp:'Incidence describes who really pays: the price elasticities of demand and supply decide how the burden is shared.'},
+
+  // ---------- Subsidies ----------
+  {id:'sub1', concept:'SUB', level:'SL', type:'mc', q:'A subsidy is…',
+   options:['A payment from the government to producers that lowers their costs','A tax that raises firms’ costs','A legal maximum price','A ban on producing a good'], answer:0,
+   exp:'A subsidy is paid to producers, lowering their costs of production and encouraging them to supply more.'},
+  {id:'sub2', concept:'SUB', level:'SL', type:'diagram', diagram:'subsidy',
+   q:'A per-unit subsidy shifts supply from S₁ to S₂. What does the distance between Pp and Pc show?',
+   options:['The subsidy per unit','The total cost of the subsidy','The gain to consumers only','The rise in quantity'], answer:0,
+   exp:'Producers receive Pp and consumers pay Pc; the government pays the gap, which is the subsidy per unit.'},
+  {id:'sub3', concept:'SUB', level:'SL', type:'diagram-options', double:true, time:1.25,
+   q:'Which diagram shows the effect of a per-unit subsidy?',
+   optionDiagrams:['subsidy','taxSpecific','dRight','sLeft'], answer:0,
+   exp:'A subsidy lowers costs, so supply shifts down (right) by the subsidy per unit: price falls and quantity rises.'},
+  {id:'sub4', concept:'SUB', level:'SL', type:'mc', q:'Which is a reason for a government to grant a subsidy?',
+   options:['To increase consumption of a merit good, such as vaccinations','To raise government revenue','To reduce consumption of a demerit good','To raise prices for consumers'], answer:0,
+   exp:'Subsidies lower prices and raise output, so they are used to encourage merit goods and support producers.'},
+  {id:'sub5', concept:'SUB', level:'SL', type:'mc', q:'Which stakeholder is most likely to lose from a subsidy?',
+   options:['Taxpayers, because of the opportunity cost of government spending','Producers of the good','Consumers of the good','Workers in the industry'], answer:0,
+   exp:'The subsidy must be paid for, so money could have been spent elsewhere, such as on healthcare or education.'},
+  {id:'sub6', concept:'SUB', level:'HL', type:'mc', time:1.5,
+   q:'A $3 per-unit subsidy lowers the price consumers pay from $10 to $8. 500 units are now sold. What is the total cost of the subsidy?',
+   options:['$1,500','$1,000','$500','$4,000'], answer:0,
+   exp:'Cost to the government = subsidy per unit × quantity = $3 × 500 = $1,500.'},
+  {id:'sub7', concept:'SUB', level:'HL', type:'mc', double:true, time:1.5,
+   q:'A $3 per-unit subsidy lowers the price consumers pay from $10 to $8. How much more per unit do producers now receive?',
+   options:['$1','$2','$3','$0'], answer:0,
+   exp:'Producers receive the consumer price plus the subsidy: $8 + $3 = $11, which is $1 more than the original $10.'},
+  {id:'sub8', concept:'SUB', level:'SL', type:'order', q:'The government subsidises solar panels. Put the effects in order.',
+   items:['Producers’ costs of making solar panels fall','Supply shifts down (to the right)','The price of solar panels falls','Quantity demanded rises','More households use renewable energy'],
+   exp:'Lower costs shift supply right; the lower price leads to a movement along demand to a higher quantity.'},
+  {id:'sub9', concept:'SUB', level:'SL', type:'mc', q:'Why might subsidies lead to inefficiency?',
+   options:['Firms may rely on them and have less incentive to cut costs','They raise prices for consumers','They reduce output','They increase government revenue'], answer:0,
+   exp:'Protected by subsidies, firms face less competitive pressure to become efficient.'},
+  {id:'sub10', concept:'SUB', level:'SL', type:'mc', q:'How can farm subsidies in rich countries harm farmers in developing countries?',
+   options:['They increase supply and lower world prices, making it harder to compete','They raise world prices','They reduce world supply','They raise demand for imports from developing countries'], answer:0,
+   exp:'Subsidised output adds to world supply, pushing down world prices and the incomes of unsubsidised farmers.'},
+
+  // ---------- Maximum prices ----------
+  {id:'max1', concept:'MAXP', level:'SL', type:'mc', q:'A maximum price only has an effect if it is set…',
+   options:['Below the equilibrium price','Above the equilibrium price','At the equilibrium price','Anywhere on the demand curve'], answer:0,
+   exp:'A price ceiling above equilibrium is not binding, because the market price is already lower.'},
+  {id:'max2', concept:'MAXP', level:'SL', type:'diagram', diagram:'maxPrice',
+   q:'A maximum price is set at Pₘₐₓ. What does the gap between Qs and Qd show?',
+   options:['A shortage (excess demand)','A surplus (excess supply)','Government spending','Tax revenue'], answer:0,
+   exp:'At the lower price, consumers want Qd but producers only supply Qs, so there is a shortage.'},
+  {id:'max3', concept:'MAXP', level:'SL', type:'diagram-options', double:true, time:1.25,
+   q:'Which diagram shows a maximum price that actually affects the market?',
+   optionDiagrams:['maxPrice','maxAbove','minPrice','minBelow'], answer:0,
+   exp:'A binding maximum price must be set below the equilibrium price (P₁).'},
+  {id:'max4', concept:'MAXP', level:'SL', type:'mc', q:'Which is an example of a maximum price?',
+   options:['Rent controls','A minimum wage','A guaranteed price for farmers','An excise tax'], answer:0,
+   exp:'Rent controls cap the rent landlords can charge, keeping it below the market rate.'},
+  {id:'max5', concept:'MAXP', level:'SL', type:'mc', q:'What is a likely consequence of rent controls?',
+   options:['A housing shortage and parallel (black) markets','A surplus of rental housing','Higher earnings for landlords','More rental housing being built'], answer:0,
+   exp:'At the capped rent, more people want housing than landlords supply, so shortages, queues and illegal markets appear.'},
+  {id:'max6', concept:'MAXP', level:'SL', type:'order', q:'A maximum price is set on bread, below equilibrium. Put the effects in order.',
+   items:['The price is forced down to the maximum','Quantity demanded rises and quantity supplied falls','A shortage appears','Queues, rationing or parallel markets develop'],
+   exp:'The lower price causes movements along both curves, opening up a shortage that must be rationed somehow.'},
+  {id:'max7', concept:'MAXP', level:'SL', type:'mc', q:'Who gains from a maximum price?',
+   options:['Consumers who manage to buy the good at the lower price','Producers of the good','All consumers equally','Consumers who cannot find the good'], answer:0,
+   exp:'Only those who obtain the good benefit from the lower price; others face the shortage.'},
+  {id:'max8', concept:'MAXP', level:'HL', type:'mc', time:1.5,
+   q:'A maximum price of $3 is set. At $3, quantity demanded is 700 units and quantity supplied is 300 units. What is the shortage?',
+   options:['400 units','300 units','700 units','1,000 units'], answer:0,
+   exp:'Shortage = quantity demanded − quantity supplied = 700 − 300 = 400 units.'},
+  {id:'max9', concept:'MAXP', level:'SL', type:'mc', q:'How could a government reduce the shortage caused by a maximum price?',
+   options:['Subsidise producers to increase supply','Tax producers','Lower the maximum price further','Encourage consumers to buy more'], answer:0,
+   exp:'A subsidy shifts supply right, raising quantity supplied at the maximum price and narrowing the shortage.'},
+
+  // ---------- Minimum prices ----------
+  {id:'min1', concept:'MINP', level:'SL', type:'mc', q:'A minimum price only has an effect if it is set…',
+   options:['Above the equilibrium price','Below the equilibrium price','At the equilibrium price','Anywhere on the supply curve'], answer:0,
+   exp:'A price floor below equilibrium is not binding, because the market price is already higher.'},
+  {id:'min2', concept:'MINP', level:'SL', type:'diagram', diagram:'minPrice',
+   q:'A minimum price is set at Pₘᵢₙ. What does the gap between Qd and Qs show?',
+   options:['A surplus (excess supply)','A shortage (excess demand)','Tax revenue','Consumer surplus'], answer:0,
+   exp:'At the higher price, producers supply Qs but consumers only demand Qd, so there is a surplus.'},
+  {id:'min3', concept:'MINP', level:'SL', type:'diagram', diagram:'minWage',
+   q:'A minimum wage is set above the equilibrium wage. What does the gap between Ld and Ls show?',
+   options:['Unemployment (excess supply of labour)','A shortage of workers','Higher productivity','Employers’ profits'], answer:0,
+   exp:'At the higher wage, more people want to work (Ls) than firms want to hire (Ld): the gap is unemployment.'},
+  {id:'min4', concept:'MINP', level:'SL', type:'mc', q:'Which is an example of a minimum price?',
+   options:['A minimum wage','Rent controls','A subsidy on bus fares','A tax on sugary drinks'], answer:0,
+   exp:'A minimum wage sets a legal floor on the price of labour.'},
+  {id:'min5', concept:'MINP', level:'SL', type:'mc', q:'Why might a government set a minimum price for agricultural products?',
+   options:['To raise and stabilise farmers’ incomes','To lower food prices','To reduce food production','To raise tax revenue'], answer:0,
+   exp:'Farm prices can be low and volatile, so a price floor protects farmers’ incomes.'},
+  {id:'min6', concept:'MINP', level:'HL', type:'mc', double:true, time:1.5,
+   q:'A minimum price of $7 is set. At $7, quantity supplied is 700 units and quantity demanded is 300 units. The government buys the surplus. What does this cost?',
+   options:['$2,800','$2,100','$4,900','$400'], answer:0,
+   exp:'Surplus = 700 − 300 = 400 units. Cost = 400 × $7 = $2,800.'},
+  {id:'min7', concept:'MINP', level:'SL', type:'order', q:'A minimum price for rice is set above equilibrium. Put the effects in order.',
+   items:['The price rises to the minimum price','Quantity supplied rises and quantity demanded falls','A surplus of rice develops','The government buys and stores the surplus','Taxpayers bear the cost (an opportunity cost)'],
+   exp:'The price floor creates a surplus; if the government buys it to hold the price up, that spending has an opportunity cost.'},
+  {id:'min8', concept:'MINP', level:'SL', type:'mc', q:'What is a likely consequence of a minimum price scheme for farmers?',
+   options:['Inefficient farmers stay in production, wasting resources','Lower prices for consumers','Shortages of food','Lower government spending'], answer:0,
+   exp:'A guaranteed high price protects high-cost producers, so resources are not reallocated to better uses.'},
+  {id:'min9', concept:'MINP', level:'SL', type:'diagram-options', time:1.25,
+   q:'Which diagram shows a minimum price that actually affects the market?',
+   optionDiagrams:['minPrice','minBelow','maxPrice','maxAbove'], answer:0,
+   exp:'A binding minimum price must be set above the equilibrium price (P₁).'},
+
+  // ---------- Other policies ----------
+  {id:'oth1', concept:'OTHGOV', level:'SL', type:'mc', q:'Which of these is an example of a nudge?',
+   options:['Making organ donation the default (opt-out) choice','Banning smoking in restaurants','A tax on sugary drinks','A subsidy for public transport'], answer:0,
+   exp:'A nudge changes how a choice is presented without banning options or changing prices.'},
+  {id:'oth2', concept:'OTHGOV', level:'SL', type:'mc', q:'Nudge theory comes from which area of economics?',
+   options:['Behavioural economics','Classical economics','Monetarism','Marxist economics'], answer:0,
+   exp:'Behavioural economics studies how real people make decisions, including biases that nudges work with.'},
+  {id:'oth3', concept:'OTHGOV', level:'SL', type:'mc', q:'What does “direct provision” mean?',
+   options:['The government supplies the good itself, e.g. state schools and hospitals','The government pays private firms to produce it','The government sets a maximum price','The government bans the good'], answer:0,
+   exp:'With direct provision, the government provides the good or service, usually free at the point of use and funded by taxes.'},
+  {id:'oth4', concept:'OTHGOV', level:'SL', type:'mc', q:'Which is an example of command and control regulation?',
+   options:['A legal limit on the pollution a factory may emit','Tradable pollution permits','A carbon tax','An advertising campaign about pollution'], answer:0,
+   exp:'Command and control sets rules that firms must obey; permits and taxes are market-based policies instead.'},
+  {id:'oth5', concept:'OTHGOV', level:'SL', type:'mc', q:'Which is an example of legislation used to reduce consumption of a demerit good?',
+   options:['A ban on cigarette advertising','A subsidy for nicotine patches','Free public parks','A maximum price on cigarettes'], answer:0,
+   exp:'Legislation uses laws, such as advertising bans or age limits, to restrict a good.'},
+  {id:'oth6', concept:'OTHGOV', level:'SL', type:'mc', q:'In a buffer stock scheme, what does the government do after a very good harvest?',
+   options:['Buys stock to stop the price falling too low','Releases stock to stop the price rising','Taxes farmers','Sets a maximum price'], answer:0,
+   exp:'A bumper harvest pushes prices down, so the government buys the extra output and stores it.'},
+  {id:'oth7', concept:'OTHGOV', level:'SL', type:'mc', q:'In a buffer stock scheme, what does the government do after a poor harvest?',
+   options:['Releases (sells) stock to stop the price rising too high','Buys more stock','Destroys stored stock','Sets a minimum price'], answer:0,
+   exp:'A poor harvest pushes prices up, so the government sells stored stock to increase supply.'},
+  {id:'oth8', concept:'OTHGOV', level:'SL', type:'order', double:true, q:'Put the steps of a buffer stock scheme in order.',
+   items:['The government sets a target price range','A bumper harvest pushes the price towards the floor','The government buys and stores the surplus','A poor harvest pushes the price towards the ceiling','The government releases stock onto the market'],
+   exp:'Buying in good years and selling in bad years keeps the price within the target range.'},
+  {id:'oth9', concept:'OTHGOV', level:'SL', type:'mc', q:'What is a weakness of buffer stock schemes?',
+   options:['They are costly to run, and stored goods can perish','They make prices less stable','Farmers lose income','They need no information about future harvests'], answer:0,
+   exp:'Buying, storing and managing stock is expensive, and perishable goods may go to waste.'},
+  {id:'oth10', concept:'OTHGOV', level:'SL', type:'mc', q:'Why might a government choose a nudge rather than a ban or a tax?',
+   options:['It keeps freedom of choice and is cheap to use','It always changes behaviour','It raises tax revenue','It is required by law'], answer:0,
+   exp:'Nudges preserve choice and cost little, although their effects can be small or uncertain.'},
+
+  // ---------- Consumer & producer surplus (welfare) ----------
+  {id:'tw1', concept:'TAX', level:'SL', type:'diagram', diagram:'wTax', time:1.25,
+   q:'A specific tax is imposed. Which areas show the government’s tax revenue?',
+   options:['B + D','C + E','A + B','D + F'], answer:0,
+   exp:'Tax revenue = tax per unit (Pc − Pp) × quantity sold (Q₂): the rectangle B + D.'},
+  {id:'tw2', concept:'TAX', level:'SL', type:'diagram', diagram:'wTax', double:true, time:1.25,
+   q:'Which areas show the welfare (deadweight) loss caused by the tax?',
+   options:['C + E','B + D','A','F'], answer:0,
+   exp:'C (lost consumer surplus) and E (lost producer surplus) are not gained by anyone, because units between Q₂ and Q₁ are no longer traded.'},
+  {id:'tw3', concept:'TAX', level:'SL', type:'diagram', diagram:'wTax', time:1.25,
+   q:'What is consumer surplus after the tax?',
+   options:['A','A + B + C','A + B','B + C'], answer:0,
+   exp:'Consumers now pay Pc and buy Q₂, so consumer surplus is the triangle above Pc and below demand: area A. It was A + B + C before.'},
+  {id:'tw4', concept:'TAX', level:'SL', type:'diagram', diagram:'wTax', time:1.25,
+   q:'How much producer surplus is lost because of the tax?',
+   options:['D + E','D','E + F','B + D'], answer:0,
+   exp:'Producer surplus falls from D + E + F to F. D becomes tax revenue and E is part of the welfare loss.'},
+  {id:'tw5', concept:'TAX', level:'HL', type:'mc', time:1.5,
+   q:'Before a tax, P = $5 and Q = 50. A $4 tax raises Pc to $7, cuts Pp to $3 and reduces Q to 30. What is the welfare loss?',
+   options:['$40','$80','$120','$20'], answer:0,
+   exp:'Welfare loss = ½ × tax per unit × fall in quantity = ½ × $4 × 20 = $40.'},
+  {id:'sw1', concept:'SUB', level:'SL', type:'diagram', diagram:'wSub', double:true, time:1.25,
+   q:'A per-unit subsidy is granted. Which area shows the welfare loss?',
+   options:['C','A','B','A + B'], answer:0,
+   exp:'The government pays A + B + C, but consumers gain only B and producers gain only A. Area C is a welfare loss from over-allocation of resources.'},
+  {id:'sw2', concept:'SUB', level:'SL', type:'diagram', diagram:'wSub', time:1.25,
+   q:'Which areas show the total cost of the subsidy to the government?',
+   options:['A + B + C','A + B','C','B + C'], answer:0,
+   exp:'Cost = subsidy per unit (Pp − Pc) × quantity (Q₂): the whole rectangle A + B + C.'},
+  {id:'sw3', concept:'SUB', level:'SL', type:'diagram', diagram:'wSub', time:1.25,
+   q:'Which area shows the gain in consumer surplus from the subsidy?',
+   options:['B','A','C','A + C'], answer:0,
+   exp:'Consumers now pay Pc instead of P₁ and buy more, so consumer surplus grows by area B.'},
+  {id:'sw4', concept:'SUB', level:'HL', type:'mc', time:1.5,
+   q:'A $4 subsidy raises quantity from 50 to 70. Consumers now pay $3 instead of $5. What is the gain in consumer surplus?',
+   options:['$120','$140','$280','$40'], answer:0,
+   exp:'The gain is a trapezium: price fall × average quantity = $2 × (50 + 70) ÷ 2 = $120.'},
+  {id:'sw5', concept:'SUB', level:'SL', type:'mc', q:'Why does a subsidy create a welfare loss?',
+   options:['Its cost to the government is greater than the gains in consumer and producer surplus','It reduces consumer surplus','It reduces producer surplus','It creates a shortage'], answer:0,
+   exp:'Output rises beyond the efficient level, so the extra units cost more to produce than they are worth to consumers.'},
+  {id:'mw1', concept:'MAXP', level:'SL', type:'diagram', diagram:'wMax', time:1.25,
+   q:'A maximum price is set. Which area is transferred from producers to consumers?',
+   options:['D','B','C + E','F'], answer:0,
+   exp:'Consumers who still buy (up to Qs) now pay Pₘₐₓ instead of P₁, so area D moves from producer to consumer surplus.'},
+  {id:'mw2', concept:'MAXP', level:'SL', type:'diagram', diagram:'wMax', double:true, time:1.25,
+   q:'Which areas show the welfare loss from the maximum price?',
+   options:['C + E','D','B + D','A'], answer:0,
+   exp:'Only Qs is now traded, so the surplus on units between Qs and Q₁ (areas C and E) is lost to society.'},
+  {id:'mw3', concept:'MAXP', level:'SL', type:'diagram', diagram:'wMax', time:1.25,
+   q:'What is producer surplus after the maximum price?',
+   options:['F','D + E + F','D + F','E + F'], answer:0,
+   exp:'Producers sell only Qs at Pₘₐₓ, so producer surplus shrinks from D + E + F to F.'},
+  {id:'mw4', concept:'MAXP', level:'SL', type:'diagram', diagram:'wMax', time:1.25,
+   q:'What is consumer surplus after the maximum price (assuming the good goes to the consumers who value it most)?',
+   options:['A + B + D','A + B + C','A + B','A + D'], answer:0,
+   exp:'Consumers lose C (fewer units traded) but gain D (a lower price), so consumer surplus becomes A + B + D.'},
+  {id:'nw1', concept:'MINP', level:'SL', type:'diagram', diagram:'wMin', time:1.25,
+   q:'A minimum price is set. Which area is transferred from consumers to producers?',
+   options:['B','D','C + E','A'], answer:0,
+   exp:'Consumers who still buy (up to Qd) pay Pₘᵢₙ instead of P₁, so area B moves from consumer to producer surplus.'},
+  {id:'nw2', concept:'MINP', level:'SL', type:'diagram', diagram:'wMin', time:1.25,
+   q:'What is consumer surplus after the minimum price?',
+   options:['A','A + B','A + B + C','A + B + D'], answer:0,
+   exp:'Consumers pay Pₘᵢₙ and buy only Qd, so consumer surplus shrinks from A + B + C to A.'},
+  {id:'nw3', concept:'MINP', level:'SL', type:'diagram', diagram:'wMin', double:true, time:1.25,
+   q:'Which areas show the welfare loss (assuming firms produce only what they can sell, Qd)?',
+   options:['C + E','B','B + D','F'], answer:0,
+   exp:'Units between Qd and Q₁ are no longer traded, so areas C and E are lost to society.'},
+  {id:'nw4', concept:'MINP', level:'SL', type:'diagram', diagram:'wMin', time:1.25,
+   q:'What is producer surplus after the minimum price (assuming firms produce only what they can sell, Qd)?',
+   options:['B + D + F','D + E + F','F','B + F'], answer:0,
+   exp:'Producers gain B from the higher price but lose E on units no longer sold: B + D + F.'},
+
+  // ================= 2.11 THEORY OF THE FIRM (HL) =================
+  {"id": "fp1", "concept": "FPROD", "level": "HL", "type": "mc", "q": "The law of diminishing marginal returns applies…", "options": ["In the short run, when at least one factor of production is fixed", "In the long run, when all factors are variable", "Only to agricultural firms", "Only when output is falling"], "answer": 0, "exp": "Adding more of a variable factor (labour) to a fixed factor (capital, land) eventually adds less and less extra output.", "rw": "A café with one espresso machine: a third barista adds less than the second, because staff end up waiting to use the machine."},
+  {"id": "fp2", "concept": "FPROD", "level": "HL", "type": "mc", "q": "Total product rises from 40 to 52 units when a 5th worker is hired. What is the marginal product of the 5th worker?", "options": ["12 units", "10.4 units", "8 units", "52 units"], "answer": 0, "exp": "MP = change in total product ÷ change in labour = (52 − 40) ÷ 1 = 12 units.", "rw": "Farms show this pattern clearly: adding workers to a fixed plot raises the harvest by less and less.", "time": 1.5},
+  {"id": "fp3", "concept": "FPROD", "level": "HL", "type": "mc", "q": "5 workers produce a total of 60 units. What is the average product of labour?", "options": ["12 units", "300 units", "55 units", "5 units"], "answer": 0, "exp": "AP = total product ÷ number of workers = 60 ÷ 5 = 12 units.", "rw": "Factories track output per worker (labour productivity) to compare plants, shifts and countries.", "time": 1.5},
+  {"id": "fp4", "concept": "FPROD", "level": "HL", "type": "diagram", "diagram": "prodCurves", "q": "Where does the MP curve cross the AP curve?", "options": ["At the maximum point of AP", "At the maximum point of MP", "Where total product is zero", "Where MP is zero"], "answer": 0, "exp": "While MP is above AP it pulls the average up; once MP falls below AP it pulls the average down. So MP cuts AP at AP’s maximum.", "rw": "If a new salesperson sells more than the team average, the average rises; if they sell less, it falls.", "time": 1.25},
+  {"id": "fp5", "concept": "FPROD", "level": "HL", "type": "diagram", "diagram": "prodCurves", "q": "When the MP curve is above the AP curve, AP is…", "options": ["Rising", "Falling", "Constant", "Zero"], "answer": 0, "exp": "Each extra worker adds more than the current average, so the average must be rising.", "rw": "Firms watch productivity data: a new hire who beats the average output lifts the whole team’s average.", "time": 1.25},
+  {"id": "fp6", "concept": "FPROD", "level": "HL", "type": "mc", "q": "When marginal product is zero, total product is…", "options": ["At its maximum", "At its minimum", "Rising at its fastest rate", "Zero"], "answer": 0, "exp": "An extra worker adds nothing, so total product has stopped rising: it is at its peak. Any further worker would reduce it.", "rw": "In a crowded kitchen, an extra chef who adds nothing to meals served shows the kitchen has hit its maximum output."},
+  {"id": "fp7", "concept": "FPROD", "level": "HL", "type": "order", "q": "A café keeps adding workers to the same small kitchen. Put the stages in order.", "items": ["Increasing marginal returns as workers specialise", "Marginal product reaches its peak", "Diminishing marginal returns set in", "Marginal product falls to zero as the kitchen overcrowds"], "exp": "Specialisation first raises MP; then the fixed kitchen limits each extra worker’s contribution until MP reaches zero.", "rw": "Restaurant kitchens during a dinner rush show all four stages as more staff are added."},
+  {"id": "fp8", "concept": "FPROD", "level": "HL", "type": "mc", "q": "Diminishing marginal returns cause the short-run marginal cost curve to…", "options": ["Rise", "Fall", "Become horizontal", "Become vertical"], "answer": 0, "exp": "As MP falls, each extra unit of output needs more of the variable factor, so the cost of each extra unit rises.", "rw": "Delivery firms in peak season face rising costs per extra parcel as warehouses and vans become crowded."},
+  {"id": "fc1", "concept": "FSRC", "level": "HL", "type": "mc", "q": "Which cost does NOT change with output in the short run?", "options": ["Rent on a factory", "Raw materials", "Hourly wages of production workers", "Electricity to run machines"], "answer": 0, "exp": "Rent is a fixed cost: it must be paid whatever the output. The others are variable costs.", "rw": "A café pays the same rent whether it serves 10 or 500 customers; coffee beans and milk rise with sales."},
+  {"id": "fc2", "concept": "FSRC", "level": "HL", "type": "mc", "q": "Total fixed cost is $100. At 20 units of output, total variable cost is $300. What is ATC?", "options": ["$20", "$15", "$5", "$400"], "answer": 0, "exp": "ATC = TC ÷ Q = ($100 + $300) ÷ 20 = $20.", "rw": "Small businesses calculate unit costs like this before deciding what price to charge.", "time": 1.5},
+  {"id": "fc3", "concept": "FSRC", "level": "HL", "type": "mc", "q": "Total cost rises from $500 to $530 when output rises from 10 to 11 units. What is the marginal cost?", "options": ["$30", "$48.18", "$50", "$530"], "answer": 0, "exp": "MC = change in TC ÷ change in output = $30 ÷ 1 = $30.", "rw": "Ride-hailing firms think about the marginal cost of one more trip: mostly fuel and the driver’s time.", "time": 1.5},
+  {"id": "fc4", "concept": "FSRC", "level": "HL", "type": "diagram", "diagram": "srCosts", "q": "The MC curve cuts the AVC and ATC curves at…", "options": ["Their minimum points", "Their maximum points", "The point where AVC and ATC meet", "Zero output"], "answer": 0, "exp": "When MC is below an average it pulls it down; when above, it pulls it up. So MC crosses each average at its lowest point.", "rw": "Manufacturers use cost curves like these to find the output where each unit is cheapest to make.", "time": 1.25},
+  {"id": "fc5", "concept": "FSRC", "level": "HL", "type": "diagram", "diagram": "srCosts", "q": "Why do the ATC and AVC curves get closer together as output rises?", "options": ["Average fixed cost falls as output rises", "Marginal cost falls as output rises", "Variable costs become fixed", "Total fixed cost falls"], "answer": 0, "exp": "ATC − AVC = AFC. Fixed cost is spread over more units, so AFC keeps falling and the gap narrows.", "rw": "Streaming services spread huge fixed content costs over more subscribers, so the fixed cost per subscriber falls.", "time": 1.25},
+  {"id": "fc6", "concept": "FSRC", "level": "HL", "type": "mc", "q": "As output rises, average fixed cost (AFC)…", "options": ["Falls continuously", "Rises continuously", "Stays constant", "Falls, then rises"], "answer": 0, "exp": "AFC = TFC ÷ Q. The same fixed cost is divided by more and more units.", "rw": "A concert venue’s fixed costs per ticket fall as more tickets are sold."},
+  {"id": "fc7", "concept": "FSRC", "level": "HL", "type": "order", "q": "Put the steps for calculating ATC from a cost table in order.", "items": ["Find total fixed cost and total variable cost", "Add them together to get total cost", "Divide total cost by the quantity of output"], "exp": "TC = TFC + TVC, and ATC = TC ÷ Q.", "rw": "Market stall owners do this when working out whether a price will cover their costs."},
+  {"id": "fc8", "concept": "FSRC", "level": "HL", "type": "mc", "q": "The short-run MC curve is U-shaped mainly because of…", "options": ["Increasing, then diminishing, marginal returns", "Economies, then diseconomies, of scale", "Falling fixed costs", "Changes in the price of the product"], "answer": 0, "exp": "Rising MP first lowers the cost of extra units; once diminishing returns set in, MC rises. Scale effects belong to the long run.", "rw": "Factories running overtime see the cost of each extra unit rise as machines and workers are stretched."},
+  {"id": "fl1", "concept": "FLRC", "level": "HL", "type": "mc", "q": "In the long run…", "options": ["All factors of production are variable", "At least one factor is fixed", "Firms cannot change their output", "Costs cannot change"], "answer": 0, "exp": "The long run is the period in which a firm can change all its inputs, including the size of its factory.", "rw": "Building a new factory or opening a new branch is a long-run decision."},
+  {"id": "fl2", "concept": "FLRC", "level": "HL", "type": "diagram", "diagram": "lrac", "q": "Up to output Q*, the firm experiences…", "options": ["Economies of scale", "Diseconomies of scale", "Diminishing marginal returns", "Constant returns to scale"], "answer": 0, "exp": "LRAC falls as the firm grows, so cost per unit falls with scale: economies of scale.", "rw": "Large supermarket chains get lower costs per item than small shops, through bulk buying and efficient logistics.", "time": 1.25},
+  {"id": "fl3", "concept": "FLRC", "level": "HL", "type": "mc", "q": "Which of these is an economy of scale?", "options": ["Buying inputs in bulk at a discount", "Poor communication between managers", "Rising rents as the firm expands", "Managers duplicating each other’s work"], "answer": 0, "exp": "Bulk-buying (purchasing economies) lowers cost per unit as the firm grows. The others raise costs.", "rw": "Retail giants such as Walmart buy in huge volumes and get lower prices from suppliers."},
+  {"id": "fl4", "concept": "FLRC", "level": "HL", "type": "mc", "q": "Which is a cause of diseconomies of scale?", "options": ["Poor communication and coordination in a very large firm", "Bulk-buying discounts", "Specialisation of workers", "Cheaper finance for big firms"], "answer": 0, "exp": "Very large firms can become hard to manage, so cost per unit rises.", "rw": "Very large organisations often struggle with slow decisions across many layers of management."},
+  {"id": "fl5", "concept": "FLRC", "level": "HL", "type": "mc", "q": "What is minimum efficient scale?", "options": ["The lowest output at which long-run average cost is minimised", "The smallest output a firm can produce", "The output where MC = MR", "The output where total cost is lowest"], "answer": 0, "exp": "Minimum efficient scale is where economies of scale run out and LRAC first reaches its minimum.", "rw": "Car makers need to produce very large volumes each year to reach minimum efficient scale."},
+  {"id": "fl6", "concept": "FLRC", "level": "HL", "type": "diagram", "diagram": "lrac", "q": "Beyond Q*, long-run average cost rises. This is because of…", "options": ["Diseconomies of scale", "Economies of scale", "Diminishing marginal returns", "Rising demand"], "answer": 0, "exp": "Rising LRAC as the firm grows means cost per unit increases with scale: diseconomies of scale.", "rw": "Some firms split into smaller units to avoid the coordination problems that come with size.", "time": 1.25},
+  {"id": "fl7", "concept": "FLRC", "level": "HL", "type": "mc", "q": "Constant returns to scale means…", "options": ["Increasing all inputs by a percentage raises output by the same percentage", "Output rises faster than inputs", "Output rises more slowly than inputs", "Output does not change"], "answer": 0, "exp": "With constant returns, cost per unit stays the same as the firm grows, so LRAC is flat.", "rw": "Many service businesses, like hair salons, show roughly constant returns: two salons cost about twice as much to run as one."},
+  {"id": "fl8", "concept": "FLRC", "level": "HL", "type": "order", "q": "Put the stages of a U-shaped LRAC curve in order as a firm grows.", "items": ["Economies of scale: LRAC falls", "Minimum efficient scale is reached", "Constant returns to scale: LRAC is flat", "Diseconomies of scale: LRAC rises"], "exp": "Growth first lowers costs, then costs level off, and finally rise as the firm becomes too large to manage efficiently.", "rw": "Amazon grew from an online bookshop into a giant with huge economies of scale in logistics."},
+  {"id": "fr1", "concept": "FREV", "level": "HL", "type": "mc", "q": "Average revenue (AR) is equal to…", "options": ["Price", "Marginal revenue", "Total revenue", "Profit per unit"], "answer": 0, "exp": "AR = TR ÷ Q = (P × Q) ÷ Q = P.", "rw": "At a street market, the price of each mango sold is the average revenue per mango."},
+  {"id": "fr2", "concept": "FREV", "level": "HL", "type": "mc", "q": "A firm sells 10 units at $8 each. To sell 11 units it must lower its price to $7. What is the marginal revenue of the 11th unit?", "options": ["−$3", "$7", "$77", "$1"], "answer": 0, "exp": "TR falls from $80 to $77, so MR = −$3. The lower price applies to all 11 units, not just the extra one.", "rw": "Streaming services weighing a price cut must balance new subscribers against lower revenue from existing ones.", "time": 1.5, "double": true},
+  {"id": "fr3", "concept": "FREV", "level": "HL", "type": "diagram", "diagram": "pcRev", "q": "Why is a perfectly competitive firm’s demand curve horizontal?", "options": ["It is a price taker that can sell any quantity at the market price", "It has a lot of market power", "Demand for its product is perfectly inelastic", "It sells a unique product"], "answer": 0, "exp": "Each firm is tiny relative to the market, so it can sell all it wants at the market price: P = AR = MR.", "rw": "A single rice farmer in Thailand sells at the market price: one farm is far too small to change it.", "time": 1.25},
+  {"id": "fr4", "concept": "FREV", "level": "HL", "type": "diagram", "diagram": "monRev", "q": "At which output is total revenue maximised?", "options": ["Q₁, where MR = 0", "Where AR = 0", "Where MR = AR", "At the highest possible price"], "answer": 0, "exp": "TR rises while MR is positive and falls once MR is negative, so TR peaks where MR = 0.", "rw": "Theme parks and airlines use pricing software to find the price that brings in the most revenue.", "time": 1.25},
+  {"id": "fr5", "concept": "FREV", "level": "HL", "type": "mc", "q": "For a straight-line downward-sloping demand curve, the MR curve…", "options": ["Has the same intercept and is twice as steep", "Is the same as the AR curve", "Is horizontal", "Slopes upwards"], "answer": 0, "exp": "To sell more, the firm must cut price on all units, so MR falls twice as fast as AR.", "rw": "Publishers know that cutting a book’s price to sell more copies also lowers the price for every other buyer."},
+  {"id": "fr6", "concept": "FREV", "level": "HL", "type": "mc", "q": "Where MR is positive, demand is…", "options": ["Price elastic", "Price inelastic", "Unit elastic", "Perfectly inelastic"], "answer": 0, "exp": "If a price cut raises TR (MR > 0), quantity must rise proportionately more than price falls: demand is elastic.", "rw": "Firms with pricing power keep their price where demand is elastic, because that is where extra sales still add revenue."},
+  {"id": "fr7", "concept": "FREV", "level": "HL", "type": "mc", "q": "A food stall earns total revenue of ฿5,000 from selling 50 meals. What is its average revenue?", "options": ["฿100", "฿250,000", "฿4,950", "฿50"], "answer": 0, "exp": "AR = TR ÷ Q = ฿5,000 ÷ 50 = ฿100, which is the price per meal.", "rw": "Street food sellers track takings per meal to judge whether price changes are working.", "time": 1.5},
+  {"id": "ff1", "concept": "FPROF", "level": "HL", "type": "mc", "q": "Normal profit is…", "options": ["The minimum return needed to keep a firm in its industry, where TR = TC", "Any profit above zero", "The maximum possible profit", "Profit after tax"], "answer": 0, "exp": "Economists include opportunity cost in total cost, so normal profit (TR = TC) just covers what the owner could earn elsewhere.", "rw": "If a café owner could earn more working for someone else, normal profit is the least that keeps them running the café."},
+  {"id": "ff2", "concept": "FPROF", "level": "HL", "type": "mc", "q": "A profit-maximising firm produces where…", "options": ["MC = MR", "AC = AR", "MR = 0", "TR = TC"], "answer": 0, "exp": "Below that output, an extra unit adds more to revenue than to cost; beyond it, it adds more to cost than to revenue.", "rw": "Firms test small price and output changes to find where one more unit stops adding to profit."},
+  {"id": "ff3", "concept": "FPROF", "level": "HL", "type": "mc", "q": "At its profit-maximising output, a firm sells 100 units at $12 each. ATC at that output is $9. What is its abnormal profit?", "options": ["$300", "$1,200", "$900", "$3"], "answer": 0, "exp": "Profit = (AR − ATC) × Q = ($12 − $9) × 100 = $300.", "rw": "Abnormal profits reported in company results tend to attract new competitors into a market.", "time": 1.5, "double": true},
+  {"id": "ff4", "concept": "FPROF", "level": "HL", "type": "mc", "q": "In the short run, a firm making a loss should shut down if…", "options": ["Price is below average variable cost", "Price is below average total cost", "Price equals marginal cost", "Total revenue is below total fixed cost"], "answer": 0, "exp": "If P < AVC, producing loses even more than shutting down (when only fixed costs are lost).", "rw": "During COVID-19 lockdowns, many restaurants closed temporarily because sales could not cover their variable costs."},
+  {"id": "ff5", "concept": "FPROF", "level": "HL", "type": "mc", "q": "A revenue-maximising firm produces where…", "options": ["MR = 0", "MC = MR", "AR = AC", "MC = AC"], "answer": 0, "exp": "Total revenue peaks where marginal revenue is zero.", "rw": "Many tech start-ups have chased revenue and user growth before profit."},
+  {"id": "ff6", "concept": "FPROF", "level": "HL", "type": "mc", "q": "Sales (output) maximisation, while still breaking even, means producing where…", "options": ["AR = AC", "MC = MR", "MR = 0", "MC = AR"], "answer": 0, "exp": "The firm expands output as far as possible while still covering all costs, i.e. making normal profit.", "rw": "Some firms maximise sales to grow market share, for example supermarkets selling some items close to cost."},
+  {"id": "ff7", "concept": "FPROF", "level": "HL", "type": "mc", "q": "What does “satisficing” mean?", "options": ["Aiming for a satisfactory level of profit while meeting several goals", "Maximising customer satisfaction at any cost", "Maximising profit in the long run", "Making a loss deliberately"], "answer": 0, "exp": "Firms with many stakeholders may settle for “good enough” profit while balancing other aims.", "rw": "Family-owned businesses often balance profit with goals such as stability and keeping the business in the family."},
+  {"id": "ff8", "concept": "FPROF", "level": "HL", "type": "mc", "q": "Which is an example of corporate social responsibility (CSR)?", "options": ["Paying farmers fair prices even when cheaper suppliers exist", "Cutting prices to drive out rivals", "Increasing advertising spending", "Maximising short-run profit"], "answer": 0, "exp": "CSR means a firm takes account of its social and environmental impact, not just profit.", "rw": "Fairtrade coffee: buyers pay farmers a minimum price plus a premium for community projects."},
+  {"id": "ff9", "concept": "FPROF", "level": "HL", "type": "order", "q": "Order these price levels from the lowest (shut down) to the highest (abnormal profit).", "items": ["Price below AVC: shut down in the short run", "Price between AVC and ATC: loss, but keep producing for now", "Price equal to ATC: normal profit", "Price above ATC: abnormal profit"], "exp": "The shut-down price is minimum AVC; the break-even price is minimum ATC.", "rw": "Airlines keep some routes running at a loss in the short run as long as ticket sales cover fuel and crew costs.", "double": true},
+  {"id": "pc1", "concept": "FPC", "level": "HL", "type": "mc", "q": "Which is NOT a feature of perfect competition?", "options": ["Firms sell differentiated products", "A very large number of firms", "No barriers to entry or exit", "Perfect information"], "answer": 0, "exp": "Firms in perfect competition sell identical (homogeneous) products.", "rw": "No real market fits perfectly, but markets for many farm products come close."},
+  {"id": "pc2", "concept": "FPC", "level": "HL", "type": "diagram", "diagram": "pcProfit", "q": "What does area A show?", "options": ["Abnormal profit", "A loss", "Normal profit", "Total cost"], "answer": 0, "exp": "At Q*, price (AR) is above ATC, so the firm earns (P − C) × Q* above normal profit.", "rw": "When a crop’s price soars, growers earn high profits for a while, until more farmers start growing it.", "time": 1.25},
+  {"id": "pc3", "concept": "FPC", "level": "HL", "type": "diagram", "diagram": "pcLoss", "q": "This firm is making a loss (area A). What should it do in the short run?", "options": ["Keep producing, because price covers average variable cost", "Shut down immediately", "Raise its price above the market price", "Leave the industry today"], "answer": 0, "exp": "P is below ATC but above AVC, so producing covers all variable costs and some fixed costs: a smaller loss than shutting down.", "rw": "Farmers often keep harvesting when prices are low, as long as they cover costs like labour and fuel.", "time": 1.25},
+  {"id": "pc4", "concept": "FPC", "level": "HL", "type": "order", "q": "Firms in perfect competition are making abnormal profits. Put the long-run adjustment in order.", "items": ["New firms enter, because there are no barriers", "Market supply shifts to the right", "The market price falls", "Profits fall until firms make only normal profit"], "exp": "Free entry competes away abnormal profit, leaving P = minimum ATC in the long run.", "rw": "When durian exports to China boomed, many Thai farmers switched to durian, increasing supply.", "double": true},
+  {"id": "pc5", "concept": "FPC", "level": "HL", "type": "mc", "q": "In long-run equilibrium, a perfectly competitive firm is…", "options": ["Both allocatively (P = MC) and productively (minimum ATC) efficient", "Allocatively efficient only", "Productively efficient only", "Neither"], "answer": 0, "exp": "In the long run P = MC = minimum ATC, so both forms of efficiency are achieved.", "rw": "Highly competitive markets push firms to cut costs and price close to marginal cost."},
+  {"id": "pc6", "concept": "FPC", "level": "HL", "type": "mc", "q": "A perfectly competitive firm’s short-run supply curve is…", "options": ["Its MC curve above minimum AVC", "Its ATC curve", "Its AVC curve", "Horizontal at the market price"], "answer": 0, "exp": "At any price above minimum AVC the firm supplies where P = MC; below it, the firm shuts down.", "rw": "A farmer decides how much to supply at each price by comparing the price with the extra cost of producing more."},
+  {"id": "pc7", "concept": "FPC", "level": "HL", "type": "mc", "q": "Which market comes closest to perfect competition?", "options": ["Rice farming by many small farmers", "Smartphones", "Airlines", "Electricity supply"], "answer": 0, "exp": "Many small sellers of a nearly identical product, with easy entry, is close to the model.", "rw": "Thailand has many small rice farmers who each sell at the market price."},
+  {"id": "pc8", "concept": "FPC", "level": "HL", "type": "mc", "q": "The market price is $6. A perfectly competitive firm produces 200 units, where ATC is $5. What is its profit?", "options": ["$200 abnormal profit", "$1,200 abnormal profit", "$1,000 abnormal profit", "A loss of $200"], "answer": 0, "exp": "Profit = (P − ATC) × Q = ($6 − $5) × 200 = $200.", "rw": "Each small farm’s profit depends on the gap between the market price and its own average cost.", "time": 1.5},
+  {"id": "mo1", "concept": "FMON", "level": "HL", "type": "mc", "q": "Which is a barrier to entry?", "options": ["Patents", "Perfect information", "Low start-up costs", "Identical products"], "answer": 0, "exp": "A patent gives one firm the legal right to be the only seller of a product for a period.", "rw": "Pharmaceutical patents give a firm the sole right to sell a new drug for many years."},
+  {"id": "mo2", "concept": "FMON", "level": "HL", "type": "diagram", "diagram": "monProfit", "q": "What does area A show?", "options": ["Abnormal profit", "Normal profit", "A loss", "Consumer surplus"], "answer": 0, "exp": "At Q (where MC = MR), price P is above average cost C, so the monopoly earns (P − C) × Q above normal profit.", "rw": "De Beers once controlled most of the world’s rough diamond supply, letting it keep prices high.", "time": 1.25},
+  {"id": "mo3", "concept": "FMON", "level": "HL", "type": "mc", "q": "A monopoly chooses output where MC = MR. How does it set its price?", "options": ["From the demand (AR) curve at that output", "Where MC = AR", "Equal to MR", "Equal to ATC"], "answer": 0, "exp": "Price is the highest consumers will pay for that output, read off the demand curve.", "rw": "Competition authorities use this reasoning to estimate how much a dominant firm overcharges."},
+  {"id": "mo4", "concept": "FMON", "level": "HL", "type": "mc", "q": "Compared with perfect competition (with the same costs), monopoly typically leads to…", "options": ["A higher price and lower output", "A lower price and higher output", "The same price and output", "A higher price and higher output"], "answer": 0, "exp": "The monopolist restricts output to where MC = MR and charges a price above MC.", "rw": "When state telecom monopolies were opened to competition in many countries, call prices tended to fall sharply."},
+  {"id": "mo5", "concept": "FMON", "level": "HL", "type": "mc", "q": "A natural monopoly exists when…", "options": ["Economies of scale are so large that one firm can supply the whole market at a lower cost than several firms", "A firm owns a natural resource", "The government owns the firm", "A firm makes abnormal profit"], "answer": 0, "exp": "LRAC is still falling at the level of market demand, so one supplier is cheapest.", "rw": "Water and electricity grids are classic natural monopolies: two sets of pipes or cables would waste resources."},
+  {"id": "mo6", "concept": "FMON", "level": "HL", "type": "mc", "q": "Why is a monopoly allocatively inefficient?", "options": ["Price is above marginal cost at its output", "It produces at minimum ATC", "It makes normal profit", "Price equals marginal cost"], "answer": 0, "exp": "P > MC means consumers value extra units more than they cost to make, but they are not produced: a welfare loss.", "rw": "Prices of patented medicines can be many times their production cost."},
+  {"id": "mo7", "concept": "FMON", "level": "HL", "type": "mc", "q": "Which is a possible advantage of monopoly?", "options": ["Abnormal profits can fund research and development", "Lower prices than in perfect competition", "More consumer choice", "Allocative efficiency"], "answer": 0, "exp": "Large, secure profits can pay for innovation, and big firms may enjoy economies of scale.", "rw": "Big tech firms such as Alphabet spend tens of billions of dollars a year on research and development."},
+  {"id": "mo8", "concept": "FMON", "level": "HL", "type": "order", "q": "Put the steps for finding a monopoly’s price on a diagram in order.", "items": ["Draw the AR (demand) and MR curves", "Find the output where MC = MR", "Go up from that output to the AR curve", "Read the price off the vertical axis"], "exp": "Output comes from MC = MR; price comes from the demand curve above that output.", "rw": "Economists use this method when analysing pricing by dominant firms in competition cases."},
+  {"id": "mo9", "concept": "FMON", "level": "HL", "type": "mc", "q": "Why will a profit-maximising monopoly never produce on the inelastic part of its demand curve?", "options": ["MR is negative there, so it cannot equal a positive MC", "Demand is zero there", "Costs are lowest there", "Price is too low there"], "answer": 0, "exp": "Where demand is inelastic, MR < 0. Since MC > 0, MC = MR can only happen where demand is elastic.", "rw": "Firms with pricing power keep raising prices until customers start leaving in large numbers.", "time": 1.5, "double": true},
+  {"id": "mn1", "concept": "FMONC", "level": "HL", "type": "mc", "q": "Which is a key feature of monopolistic competition?", "options": ["Many firms selling differentiated products, with low barriers to entry", "A few large interdependent firms", "One firm with high barriers to entry", "Identical products and perfect information"], "answer": 0, "exp": "Each firm has a little market power from its unique product, but entry is easy.", "rw": "Bangkok’s coffee shops: many sellers, each with its own style, location and menu."},
+  {"id": "mn2", "concept": "FMONC", "level": "HL", "type": "diagram", "diagram": "moncLR", "q": "This firm is in monopolistic competition in the long run. What profit does it make?", "options": ["Normal profit only", "Abnormal profit", "A loss", "It depends on the market price"], "answer": 0, "exp": "Demand just touches ATC at Q, so P = ATC: only normal profit.", "rw": "New cafés open wherever existing ones do well, until most earn only normal profit.", "time": 1.25},
+  {"id": "mn3", "concept": "FMONC", "level": "HL", "type": "mc", "q": "Why do abnormal profits disappear in the long run in monopolistic competition?", "options": ["New firms enter and take customers, so each firm’s demand shifts left", "The government taxes them away", "Firms merge", "Costs fall"], "answer": 0, "exp": "Low barriers let new firms in until each firm earns only normal profit.", "rw": "When bubble tea became a craze, new shops opened quickly and profit per shop fell."},
+  {"id": "mn4", "concept": "FMONC", "level": "HL", "type": "diagram", "diagram": "moncLR", "q": "In long-run equilibrium, this firm produces where ATC is still falling. What does this show?", "options": ["Excess capacity: the firm is not productively efficient", "The firm is allocatively efficient", "The firm makes a loss", "Economies of scale have run out"], "answer": 0, "exp": "Output Q is below the level at minimum ATC, so the firm could produce more at a lower average cost.", "rw": "Many cafés and hair salons have empty seats for much of the day: a sign of excess capacity.", "time": 1.25},
+  {"id": "mn5", "concept": "FMONC", "level": "HL", "type": "mc", "q": "Which is an example of non-price competition?", "options": ["Advertising and branding", "A price cut", "A discount sale", "Matching a rival’s price"], "answer": 0, "exp": "Firms compete through product differences, image and service rather than price.", "rw": "Restaurants compete with décor, delivery apps, loyalty cards and social media, not just price."},
+  {"id": "mn6", "concept": "FMONC", "level": "HL", "type": "mc", "q": "Which market is the best example of monopolistic competition?", "options": ["Restaurants in a large city", "The national electricity grid", "Wheat farming", "Smartphone operating systems"], "answer": 0, "exp": "Many sellers, each slightly different, with easy entry and exit.", "rw": "Hair salons, restaurants and clothing boutiques are classic examples."},
+  {"id": "mn7", "concept": "FMONC", "level": "HL", "type": "order", "q": "A monopolistically competitive industry is earning abnormal profits. Put what happens next in order.", "items": ["Firms earn abnormal profits in the short run", "New firms are attracted and enter", "Each existing firm’s demand shifts left", "Abnormal profits fall until only normal profit remains"], "exp": "Easy entry competes away abnormal profit, just as in perfect competition, but firms keep some market power.", "rw": "Food trends such as Korean fried chicken shops show this cycle: early profits, a rush of new shops, then normal profits."},
+  {"id": "ol1", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "An oligopoly is a market…", "options": ["Dominated by a few large, interdependent firms", "With one seller", "With many small firms", "With no barriers to entry"], "answer": 0, "exp": "Each firm’s decisions affect its rivals, so firms must consider how rivals will react.", "rw": "Thailand’s mobile network market is dominated by a few large operators."},
+  {"id": "ol2", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "A four-firm concentration ratio (CR4) of 85% means…", "options": ["The four largest firms have 85% of market sales", "Four firms each have 85% of the market", "85% of firms are large", "The market has four firms"], "answer": 0, "exp": "The concentration ratio adds up the market shares of the largest firms.", "rw": "Many countries’ supermarket and mobile phone markets have high concentration ratios."},
+  {"id": "ol3", "concept": "FOLIG", "level": "HL", "type": "diagram", "diagram": "kinked", "q": "In the kinked demand curve model, why is price likely to stay at P?", "options": ["Rivals match price cuts but not price rises", "Rivals match price rises but not price cuts", "The government fixes the price", "Demand is perfectly inelastic"], "answer": 0, "exp": "Raising price loses many customers (elastic upper section); cutting price gains few, because rivals follow (inelastic lower section).", "rw": "Petrol stations on the same road often match each other’s price cuts within hours.", "time": 1.25},
+  {"id": "ol4", "concept": "FOLIG", "level": "HL", "type": "diagram", "diagram": "kinked", "q": "MC can move up or down within the vertical gap in MR without changing price or output. Why?", "options": ["MC still equals MR within the gap at Q", "MR is zero within the gap", "Demand is perfectly elastic", "Costs do not matter to oligopolists"], "answer": 0, "exp": "The MR curve has a vertical section at Q, so MC can shift within it and the profit-maximising Q and P stay the same.", "rw": "Soft drink prices often stay the same for long periods even when ingredient costs change.", "time": 1.25},
+  {"id": "ol5", "concept": "FOLIG", "level": "HL", "type": "diagram", "diagram": "gameMatrix", "q": "What is each firm’s dominant strategy?", "options": ["Charge a low price", "Charge a high price", "Copy the other firm", "There is no dominant strategy"], "answer": 0, "exp": "Whatever B does, A earns more with a low price (12 > 10 and 6 > 4). The same is true for B.", "rw": "Airlines on the same route face this dilemma when deciding whether to cut fares.", "time": 1.25},
+  {"id": "ol6", "concept": "FOLIG", "level": "HL", "type": "diagram", "diagram": "gameMatrix", "q": "What is the Nash equilibrium in this game?", "options": ["Both firms charge a low price", "Both firms charge a high price", "A charges high, B charges low", "There is no equilibrium"], "answer": 0, "exp": "With both on low price, neither can gain by changing alone, even though both would earn more (10 each) if they both charged high.", "rw": "Price wars between supermarkets or ride-hailing apps leave firms in the low-price outcome.", "time": 1.25, "double": true},
+  {"id": "ol7", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "When firms formally agree to fix prices or output, this is called…", "options": ["A cartel", "Tacit collusion", "Price leadership", "Non-price competition"], "answer": 0, "exp": "A cartel is an explicit (formal) collusive agreement, which is illegal in most countries.", "rw": "OPEC is the best-known example of a cartel, coordinating oil output among member countries."},
+  {"id": "ol8", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "Why are cartels often unstable?", "options": ["Each member has an incentive to cheat by producing more than agreed", "Members always agree on prices", "Cartels are legal everywhere", "Demand never changes"], "answer": 0, "exp": "If others stick to the quota, a cheat can sell more at the high price and earn more profit.", "rw": "OPEC members have at times produced above their agreed quotas."},
+  {"id": "ol9", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "What is tacit collusion?", "options": ["Informal coordination without an agreement, such as following a price leader", "A written agreement to fix prices", "Government price controls", "A merger of two firms"], "answer": 0, "exp": "Firms behave cooperatively without ever formally agreeing, so it is hard to prove.", "rw": "In some markets, smaller firms simply follow the price changes of the market leader."},
+  {"id": "ol10", "concept": "FOLIG", "level": "HL", "type": "mc", "q": "Which is a common form of competition in oligopoly?", "options": ["Non-price competition, such as advertising and product innovation", "Frequent price wars", "Selling identical products at the market price", "No competition at all"], "answer": 0, "exp": "Price wars hurt everyone, so oligopolists often compete through branding, features and marketing instead.", "rw": "Smartphone makers compete heavily on features, design and marketing, not just on price."},
+  {"id": "fe1", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Allocative efficiency occurs where…", "options": ["Price = marginal cost", "Price = average cost", "Marginal revenue = 0", "Average cost is at its minimum"], "answer": 0, "exp": "P = MC means the value consumers place on the last unit equals the cost of producing it.", "rw": "Economists use P = MC as the benchmark when judging whether a market produces the right amount."},
+  {"id": "fe2", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Productive efficiency occurs where…", "options": ["Firms produce at the lowest point of their ATC curve", "Price equals marginal cost", "Marginal cost equals marginal revenue", "Total revenue is maximised"], "answer": 0, "exp": "Producing at minimum ATC means goods are made at the lowest possible cost per unit.", "rw": "Strong competition, as in many manufacturing sectors, pushes firms to produce at the lowest possible cost."},
+  {"id": "fe3", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Which market structure is both allocatively and productively efficient in the long run?", "options": ["Perfect competition", "Monopoly", "Monopolistic competition", "Oligopoly"], "answer": 0, "exp": "Only in perfect competition does long-run equilibrium give P = MC = minimum ATC.", "rw": "Perfect competition is a benchmark used to judge how real markets perform."},
+  {"id": "fe4", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Which government policy directly targets the abuse of market power?", "options": ["Competition (anti-monopoly) law, such as fines for price-fixing", "A subsidy for producers", "A minimum wage", "A tax on imports"], "answer": 0, "exp": "Competition authorities can fine firms, block mergers and break up abusive practices.", "rw": "The European Commission has fined Google billions of euros for abusing a dominant position."},
+  {"id": "fe5", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Why might a government regulate the price of a natural monopoly, such as a water company?", "options": ["To stop it charging high prices while keeping the cost savings of one supplier", "To create more competitors", "To raise tax revenue", "To reduce economies of scale"], "answer": 0, "exp": "Breaking up a natural monopoly would raise costs, so regulators cap prices instead.", "rw": "In the UK, regulators set limits on what water and energy companies can charge customers."},
+  {"id": "fe6", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Why might a government block a merger?", "options": ["It would reduce competition and give the new firm too much market power", "It would lower prices", "It would increase consumer choice", "It would create too many firms"], "answer": 0, "exp": "Fewer, bigger firms can raise prices and cut output, so authorities review large mergers.", "rw": "Competition authorities around the world can block mergers they believe would weaken competition."},
+  {"id": "fe7", "concept": "FEFF", "level": "HL", "type": "mc", "q": "Other things equal, which market structure is likely to cause the largest welfare loss?", "options": ["Monopoly", "Perfect competition", "Monopolistic competition", "All cause the same loss"], "answer": 0, "exp": "A monopolist restricts output furthest below the allocatively efficient level, so the welfare loss is largest.", "rw": "The higher prices and lower output of monopoly are why governments monitor dominant firms closely."},
+];
+
+/* Real-world examples, shown on the reveal screen. */
+const RW = {
+"ped1": "Petrol: when fuel prices jump, most drivers still need to get to work, so quantity demanded falls only slightly in the short run.",
+"ped2": "Cigarette makers can raise prices with little loss of sales because many smokers are addicted, so revenue tends to rise.",
+"ped3": "A single brand of bottled water has many substitutes on the shelf: if it raises its price, shoppers simply pick another brand.",
+"ped4": "Cinema chains and airlines estimate figures like this when deciding whether a price rise will cost them too many sales.",
+"ped5": "Demand for flights with one airline on a busy route is far more price elastic than demand for insulin.",
+"ped6": "Insulin for people with diabetes comes close: patients need the same amount whatever the price.",
+"ped7": "Economists estimate PED for fuel, cigarettes and restaurant meals to predict how sales will react to tax or price changes.",
+"ped8": "Budget airlines use this logic: low fares on competitive routes fill more seats and raise total revenue.",
+"yed1": "Instant noodles are often cited as an inferior good: as incomes rise, many households switch to fresher food or eating out.",
+"yed2": "Demand for overseas holidays and luxury cars rises much faster than incomes in a boom, and falls sharply in a recession.",
+"yed3": "Restaurant chains watch income forecasts closely, because spending on eating out rises faster than incomes in good times.",
+"yed4": "As Thailand and other economies have grown, agriculture’s share of output has fallen while the services share has risen.",
+"yed5": "Public bus travel is often an inferior good: as incomes rise, many people switch to cars, taxis or ride-hailing apps.",
+"yed6": "Luxury fashion brands see their sales swing much more with the economic cycle than supermarkets selling bread and rice.",
+"pes1": "In an economic slowdown, factories often have idle machines and workers, so they can raise output quickly if prices rise.",
+"pes2": "Coffee trees take several years before their first harvest, so coffee supply cannot respond quickly to a price rise.",
+"pes3": "Housing supply is a classic inelastic case: building new homes takes years, so prices rise sharply when demand jumps.",
+"pes4": "Unit elastic supply is mainly a benchmark, but it helps compare real markets such as manufactured goods and farm produce.",
+"pes5": "Tickets for a World Cup final are fixed by stadium capacity, so extra demand only pushes up prices, often on resale sites.",
+"pes6": "Digital goods such as app downloads come close: extra copies cost almost nothing to supply at the same price.",
+"pes7": "When demand for face masks surged in 2020, makers needed time to add production lines, so supply became more elastic over time.",
+"tax1": "Thailand’s VAT and its excise taxes on alcohol, tobacco and sugary drinks are all indirect taxes.",
+"tax2": "Excise duties on fuel are usually specific taxes: a fixed amount per litre, whatever the pump price.",
+"tax3": "VAT is an ad valorem tax: it is a percentage of the price, so a more expensive item pays more tax per unit.",
+"tax4": "Thailand introduced a tax on sugary drinks in 2017, raising revenue while pushing firms and consumers to cut sugar.",
+"tax5": "Cigarette taxes: because smokers’ demand is inelastic, most of each tax rise is passed on to them in higher prices.",
+"tax6": "Governments raise large revenues from fuel, alcohol and tobacco taxes precisely because demand for them is price inelastic.",
+"tax7": "Finance ministries forecast excise revenue before changing tax rates, using calculations just like this one.",
+"tax8": "Studies of tobacco taxes generally find that most of the tax is passed on to smokers in higher prices.",
+"tax9": "Australia has some of the world’s highest tobacco taxes, and its smoking rates have fallen substantially over recent decades.",
+"tax10": "A tax on rice or cooking oil takes a much larger share of a low-income family’s budget than a high-income family’s.",
+"tax11": "When the UK’s Soft Drinks Industry Levy started in 2018, many firms cut sugar in their drinks to avoid the tax rather than pass it on.",
+"sub1": "Thailand’s electric vehicle incentive schemes have offered subsidies on eligible electric cars to speed up EV adoption.",
+"sub2": "With EV subsidies, the subsidy per car is the gap between what the seller receives and what the buyer pays.",
+"sub3": "Subsidies for solar panels in countries such as Germany helped expand supply, cut prices and boost installations.",
+"sub4": "Governments subsidise vaccinations and school meals because the benefits to society exceed the benefits to the individual.",
+"sub5": "Fuel subsidies in some countries have cost governments large sums that could otherwise fund schools or hospitals.",
+"sub6": "Government budgets list subsidy costs as spending lines, worked out in the same way as this question.",
+"sub7": "Studies of EV subsidies ask exactly this: how much reaches buyers as lower prices and how much stays with sellers?",
+"sub8": "Large subsidies for solar panel manufacturing in China helped drive down the world price of solar panels.",
+"sub9": "Critics argue long-running farm subsidies, such as the EU’s Common Agricultural Policy, can keep inefficient producers in business.",
+"sub10": "Brazil challenged US cotton subsidies at the WTO, arguing they pushed down world prices and hurt other cotton producers.",
+"max1": "Rent controls in many cities cap rents below market levels; a cap above the market rent would make no difference.",
+"max2": "Berlin froze rents in 2020; reports at the time pointed to a fall in the number of flats advertised for rent.",
+"max3": "Price caps on fuel or basic foods during a crisis only bite if they are set below the market price.",
+"max4": "New York City has had rent control and rent stabilisation laws for decades.",
+"max5": "Venezuela’s price controls on basic foods in the 2010s were linked to severe shortages and long queues.",
+"max6": "During crises, price caps on essentials such as bread or cooking oil often lead to queues and rationing.",
+"max7": "Tenants lucky enough to hold rent-controlled flats gain, while newcomers struggle to find anywhere to rent.",
+"max8": "Officials can measure a shortage by comparing how much people want to buy with how much is on offer at the capped price.",
+"max9": "Some governments pair price caps with payments to producers so that supply does not dry up at the capped price.",
+"min1": "Thailand’s daily minimum wage only affects jobs that would otherwise pay less than that rate.",
+"min2": "EU intervention buying in the 1980s created huge stockpiles of surplus butter and milk powder, nicknamed “butter mountains”.",
+"min3": "Economists still debate how large the job losses from minimum wage rises are; real-world studies find mixed results.",
+"min4": "Thailand sets a daily minimum wage, with different rates in different provinces.",
+"min5": "Thailand’s rice pledging scheme (2011–2014) paid farmers well above market prices to raise their incomes.",
+"min6": "Thailand’s rice pledging scheme left the government with huge rice stockpiles and very large financial losses.",
+"min7": "Under Thailand’s rice pledging scheme, the government bought and stored millions of tonnes of rice that it later struggled to sell.",
+"min8": "Critics of EU price support said it kept high-cost farms in business and encouraged overproduction.",
+"min9": "Scotland’s minimum unit pricing for alcohol (from 2018) sets a floor price per unit, mainly raising the price of very cheap drinks.",
+"oth1": "Wales switched to an opt-out organ donation system in 2015, and England followed in 2020.",
+"oth2": "Richard Thaler won the 2017 Nobel Prize in Economics for his work in behavioural economics, including nudges.",
+"oth3": "Thailand’s universal health coverage scheme, introduced in 2002, provides healthcare largely funded by the government.",
+"oth4": "Many countries set legal limits on emissions from new cars, such as the European “Euro” emission standards.",
+"oth5": "Thailand restricts the hours during which alcohol can be sold in shops.",
+"oth6": "In the 1980s the European Community bought up surplus farm produce, creating stores nicknamed “butter mountains” and “wine lakes”.",
+"oth7": "Countries such as China and India hold large grain reserves that they can release to calm rising food prices.",
+"oth8": "The Food Corporation of India buys grain from farmers at support prices, stores it, and later releases it through public distribution.",
+"oth9": "The International Tin Council’s buffer stock collapsed in 1985 after it ran out of money trying to hold up the tin price.",
+"oth10": "The UK’s Behavioural Insights Team (the “Nudge Unit”) found that telling people most others had paid their tax on time raised payment rates.",
+"tw1": "Revenue from the UK’s soft drinks levy was initially linked to funding for school sport and healthy-eating programmes.",
+"tw2": "Economists estimate welfare losses like these when judging which goods are least costly to tax.",
+"tw3": "After Thailand’s sugary drinks tax, consumers who still buy high-sugar drinks pay more and keep less consumer surplus.",
+"tw4": "Tobacco firms lose producer surplus from cigarette taxes, which is one reason they lobby against tax rises.",
+"tw5": "Treasury economists estimate deadweight losses like this when they weigh up the cost of a new tax.",
+"sw1": "Critics of fuel subsidies argue that the cost to taxpayers is greater than the benefits to drivers and fuel companies.",
+"sw2": "When world oil prices rise, the cost of fixed-price fuel subsidies can balloon for governments.",
+"sw3": "EV subsidies raise buyers’ consumer surplus by lowering the price they pay for an electric car.",
+"sw4": "Reviews of farm subsidies estimate how much of the money ends up with consumers and how much with producers.",
+"sw5": "Subsidised fuel can encourage people to use more fuel than they otherwise would, which is part of the welfare loss.",
+"mw1": "Under rent controls, tenants who keep their flats gain at landlords’ expense: a transfer from producers to consumers.",
+"mw2": "The welfare loss from rent controls shows up as flats that are never built or rented out.",
+"mw3": "Landlords under rent controls earn less, so some convert flats to other uses, shrinking supply further.",
+"mw4": "In reality, scarce goods often go to whoever queues longest or has connections, not to those who value them most.",
+"nw1": "Minimum prices for farm goods transfer surplus from consumers, who pay more, to farmers, who receive more per unit.",
+"nw2": "Scotland’s minimum unit pricing raised the price of the cheapest alcoholic drinks, cutting consumer surplus for those buyers.",
+"nw3": "Unsold surpluses under price floors waste resources, like the stored produce in the EU’s “butter mountains”.",
+"nw4": "Farmers who sell at the guaranteed price gain, which is one reason farm groups often support minimum price schemes."
+};
+BANK.forEach(q => { if (!q.rw) q.rw = RW[q.id]; });
+
+/* Diagrams are drawn in a 0–10 data space. */
+const S_LINE = {a:[1,1], b:[9,9], label:'S', k:'s'};
+const D_LINE = {a:[1,9], b:[9,1], label:'D₁', k:'d'};
+const W_D = {a:[0,10], b:[9,1], label:'D', k:'d'}, W_S = {a:[0,0], b:[9,9], label:'S', k:'s'};
+/* Six standard areas used for taxes and price controls (A top … F bottom). */
+const AREAS6 = [
+  {pts:[[0,7],[0,10],[3,7]], l:'A', at:[1,8]},   {pts:[[0,5],[0,7],[3,7],[3,5]], l:'B', at:[1.5,6]},
+  {pts:[[3,7],[5,5],[3,5]], l:'C', at:[3.65,5.65]}, {pts:[[0,3],[0,5],[3,5],[3,3]], l:'D', at:[1.5,4]},
+  {pts:[[3,5],[5,5],[3,3]], l:'E', at:[3.65,4.35]}, {pts:[[0,0],[0,3],[3,3]], l:'F', at:[1,2]}];
+/* Cost formulas: TVC = 4q − q² + 0.1q³, TFC = 4, so AVC, ATC and MC are mutually consistent. */
+const AVC = q => 4 - q + 0.1*q*q, ATC = q => AVC(q) + 4/q, MCq = q => 4 - 2*q + 0.3*q*q;
+const sc = (f, k) => q => k * f(q);
+const DIAG = {
+  pedCompare:{lines:[{a:[3.5,9],b:[6.5,1],label:'D₁',k:'d'},{a:[1,7],b:[9,3],label:'D₂',k:'d',alt:true}], dots:[{x:5,y:5,xl:'Q₁',yl:'P₁'}]},
+  dVertical:{lines:[{a:[5,9],b:[5,1],label:'D',k:'d'}]},
+  sOrigin:{lines:[{a:[0,0],b:[8,9],label:'S',k:'s'}]},
+  sVertical:{lines:[{a:[5,1],b:[5,9],label:'S',k:'s'}]},
+  sHoriz:{lines:[{a:[1,5],b:[9,5],label:'S',k:'s'}]},
+  sQaxis:{lines:[{a:[3,0],b:[7,9],label:'S',k:'s'}]},
+  dRight:{lines:[S_LINE,{...D_LINE,old:true},{a:[3,9],b:[9,3],label:'D₂',k:'d'}], arrow:[[3.4,7],[4.6,7]]},
+  dLeft:{lines:[S_LINE,{...D_LINE,old:true},{a:[1,7],b:[7,1],label:'D₂',k:'d'}], arrow:[[2.6,7],[1.4,7]]},
+  sLeft:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S₁',k:'s',old:true},{a:[1,3],b:[7,9],label:'S₂',k:'s'}], arrow:[[7.1,7.5],[5.9,7.5]]},
+  taxSpecific:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'},{a:[1,5],b:[5,9],label:'S+tax',k:'s'}],
+    dots:[{x:3,y:7,yl:'Pc',xl:'Q₂'},{x:5,y:5,yl:'P₁',xl:'Q₁'},{x:3,y:3,yl:'Pp'}]},
+  taxAdval:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'},{a:[1,1.6],b:[5.6,9],label:'S+tax',k:'s'}]},
+  taxInelastic:{lines:[{a:[3.7,8.9],b:[6.3,1.1],label:'D',k:'d'},{a:[1,1],b:[9,9],label:'S',k:'s'},{a:[1,4],b:[6,9],label:'S+tax',k:'s'}],
+    dots:[{x:4.25,y:7.25,yl:'Pc'},{x:5,y:5},{x:4.25,y:4.25,yl:'Pp'}]},
+  subsidy:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S₁',k:'s'},{a:[5,1],b:[9,5],label:'S₂',k:'s'}],
+    dots:[{x:7,y:7,yl:'Pp'},{x:5,y:5,yl:'P₁',xl:'Q₁'},{x:7,y:3,yl:'Pc',xl:'Q₂'}]},
+  maxPrice:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'}], hlines:[{y:3,label:'Pₘₐₓ'}],
+    dots:[{x:5,y:5,yl:'P₁'},{x:3,y:3,xl:'Qs'},{x:7,y:3,xl:'Qd'}]},
+  maxAbove:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'}], hlines:[{y:7,label:'Pₘₐₓ'}], dots:[{x:5,y:5,yl:'P₁',xl:'Q₁'}]},
+  minPrice:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'}], hlines:[{y:7,label:'Pₘᵢₙ'}],
+    dots:[{x:5,y:5,yl:'P₁'},{x:3,y:7,xl:'Qd'},{x:7,y:7,xl:'Qs'}]},
+  minBelow:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S',k:'s'}], hlines:[{y:3,label:'Pₘᵢₙ'}], dots:[{x:5,y:5,yl:'P₁',xl:'Q₁'}]},
+  minWage:{axes:['W','L'], lines:[{a:[1,9],b:[9,1],label:'Dₗ',k:'d'},{a:[1,1],b:[9,9],label:'Sₗ',k:'s'}], hlines:[{y:7,label:'Wₘᵢₙ'}],
+    dots:[{x:5,y:5,yl:'W₁'},{x:3,y:7,xl:'Ld'},{x:7,y:7,xl:'Ls'}]},
+  wTax:{ys:20, areas:'six', lines:[W_D,W_S,{a:[0,4],b:[5.5,9.5],label:'S+tax',k:'s'}],
+    dots:[{x:3,y:7,yl:'Pc',xl:'Q₂'},{x:5,y:5,yl:'P₁',xl:'Q₁'},{x:3,y:3,yl:'Pp'}]},
+  wMax:{ys:20, areas:'six', lines:[W_D,W_S], hlines:[{y:3,label:'Pₘₐₓ'}],
+    dots:[{x:5,y:5,yl:'P₁'},{x:3,y:3,xl:'Qs'},{x:7,y:3,xl:'Qd'}]},
+  wMin:{ys:20, areas:'six', lines:[W_D,W_S], hlines:[{y:7,label:'Pₘᵢₙ'}],
+    dots:[{x:5,y:5,yl:'P₁'},{x:3,y:7,xl:'Qd'},{x:7,y:7,xl:'Qs'}]},
+  wSub:{ys:20, lines:[W_D,{...W_S,label:'S₁'},{a:[4,0],b:[9.5,5.5],label:'S₂',k:'s'}],
+    areas:[{pts:[[0,5],[5,5],[7,7],[0,7]],l:'A',at:[2.5,6]},{pts:[[0,3],[7,3],[5,5],[0,5]],l:'B',at:[2.5,4]},{pts:[[5,5],[7,7],[7,3]],l:'C',at:[6.3,5]}],
+    dots:[{x:7,y:7,yl:'Pp'},{x:5,y:5,yl:'P₁',xl:'Q₁'},{x:7,y:3,yl:'Pc',xl:'Q₂'}]},
+  prodCurves:{axes:['Q','L'], curves:[
+      {f:q => 2*(2.4*q - .36*q*q), x0:.3, x1:6.6, label:'MP', k:'mc', lp:[6.75,1.1]},
+      {f:q => 2*(1.2*q - .12*q*q), x0:.3, x1:9.2, label:'AP', k:'ac'}],
+    dots:[{x:5,y:6}]},
+  srCosts:{axes:['C','Q'], curves:[
+      {f:sc(MCq,2), x0:.8, x1:7, label:'MC', k:'mc'},
+      {f:sc(ATC,2), x0:1.8, x1:9, label:'ATC', k:'ac', lp:[9.1,7.3]},
+      {f:sc(AVC,2), x0:.8, x1:9, label:'AVC', k:'av', lp:[9.1,5.9]}],
+    dots:[{x:5,y:3},{x:5.62,y:4.5}]},
+  lrac:{axes:['C','Q'], curves:[{f:q => 2.5 + .12*(q-5)*(q-5), x0:.8, x1:9.2, label:'LRAC', k:'ac', lp:[7.6,5.4]}],
+    dots:[{x:5,y:2.5,xl:'Q*'}]},
+  pcRev:{lines:[{a:[0,5],b:[9,5],label:'D = AR = MR',k:'d',lp:[3.2,5.7]}], texts:[{x:-.25,y:5,t:'P',anchor:'end'}]},
+  monRev:{lines:[{a:[0,9.5],b:[9,.5],label:'D=AR',k:'d',lp:[7.6,2.6]},{a:[0,9.5],b:[4.75,0],label:'MR',k:'mr',lp:[3.3,2.6]}],
+    dots:[{x:4.75,y:4.75,xl:'Q₁'},{x:4.75,y:0}]},
+  pcProfit:{axes:['C','Q'], areas:[{pts:[[0,4.65],[6.41,4.65],[6.41,7],[0,7]], l:'A', at:[3,5.8]}],
+    lines:[{a:[0,7],b:[9,7],label:'MR',k:'d',lp:[8.3,7.45]}],
+    curves:[{f:sc(MCq,2), x0:.8, x1:7, label:'MC', k:'mc'},{f:sc(ATC,2), x0:1.8, x1:8.2, label:'ATC', k:'ac', lp:[8.4,5.6]}],
+    dots:[{x:6.41,y:7,yl:'P',xl:'Q*'},{x:6.41,y:4.65,yl:'C'}]},
+  pcLoss:{axes:['C','Q'], areas:[{pts:[[0,3.4],[5.19,3.4],[5.19,4.55],[0,4.55]], l:'A', at:[1.2,3.9]}],
+    lines:[{a:[0,3.4],b:[9,3.4],label:'MR',k:'d'}],
+    curves:[{f:sc(MCq,2), x0:.8, x1:7, label:'MC', k:'mc'},{f:sc(ATC,2), x0:1.8, x1:9, label:'ATC', k:'ac', lp:[9.1,7.3]},
+      {f:sc(AVC,2), x0:.8, x1:9, label:'AVC', k:'av', lp:[9.1,5.9]}],
+    dots:[{x:5.19,y:3.4,yl:'P',xl:'Q*'},{x:5.19,y:4.55,yl:'C'}]},
+  monProfit:{axes:['C','Q'], areas:[{pts:[[0,3.83],[4.11,3.83],[4.11,5.39],[0,5.39]], l:'A', at:[1.1,4.55]}],
+    lines:[{a:[0,9.5],b:[9,.5],label:'D=AR',k:'d',lp:[7.7,2.4]},{a:[0,9.5],b:[4.6,.3],label:'MR',k:'mr',lp:[4.8,.9]}],
+    curves:[{f:sc(MCq,1.5), x0:.8, x1:7.5, label:'MC', k:'mc'},{f:sc(ATC,1.5), x0:1.2, x1:9, label:'ATC', k:'ac'}],
+    dots:[{x:4.11,y:5.39,yl:'P',xl:'Q'},{x:4.11,y:3.83,yl:'C'},{x:4.11,y:1.28}]},
+  moncLR:{axes:['C','Q'], lines:[{a:[0,6.6],b:[9,.525],label:'D=AR',k:'d',lp:[7.6,2.3]},{a:[0,6.6],b:[4.7,.255],label:'MR',k:'mr',lp:[4.9,.9]}],
+    curves:[{f:sc(MCq,1.5), x0:.8, x1:7.5, label:'MC', k:'mc'},{f:sc(ATC,1.5), x0:1.2, x1:9, label:'ATC', k:'ac'}],
+    dots:[{x:4,y:3.9,yl:'P',xl:'Q'},{x:4,y:1.2}]},
+  kinked:{lines:[{a:[.5,7.5],b:[4,6],k:'d'},{a:[4,6],b:[8,1.5],label:'D',k:'d'},
+      {a:[.5,7.28],b:[4,4.28],k:'mr'},{a:[4,4.28],b:[4,1.5],k:'mr',dash:true},{a:[4,1.5],b:[4.6,.15],label:'MR',k:'mr',lp:[4.85,1]},
+      {a:[1,1],b:[7.5,6.5],label:'MC',k:'mc'}],
+    dots:[{x:4,y:6,yl:'P',xl:'Q'}]},
+  gameMatrix:{matrix:{unit:'$m', rows:['High','Low'], cols:['High','Low'], v:[[[10,10],[4,12]],[[12,4],[6,6]]]}},
+  sRight:{lines:[{...D_LINE,label:'D'},{a:[1,1],b:[9,9],label:'S₁',k:'s',old:true},{a:[3,1],b:[9,7],label:'S₂',k:'s'}], arrow:[[6.9,6.5],[8.1,6.5]]},
+};
+
+const BOT_NAMES = ['InvisibleHand','Keynes4Life','MarginalMia','Elastic_Eli','SupplySideSam','DemandDan','PED_Pro','ShortRunSara',
+  'CeterisParibus','OpportunityKat','GiffenGuy','UtilityMax','LongRunLeo','PriceTaker','BarrierBen','SubstituteSue',
+  'LaissezFaye','ExternaliTea','QuotaQueen','SubsidySid','TariffTom','Equilibrium_Em','MonopolyMo','SpareCapacity'];
+
+const SHAPES = [
+  '<svg class="shape" viewBox="0 0 24 24"><path d="M12 3 22.5 20.5h-21z"/></svg>',
+  '<svg class="shape" viewBox="0 0 24 24"><path d="M12 1.5 22.5 12 12 22.5 1.5 12z"/></svg>',
+  '<svg class="shape" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>',
+  '<svg class="shape" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5"/></svg>'];
+const LETTERS = ['A','B','C','D'];
+const SHORT = Object.fromEntries(SYLLABUS.flatMap(u => u.subs).flatMap(s => s.concepts).map(c => [c.id, c.short || c.id]));
+const TYPE_LABEL = {mc:'Multiple choice', diagram:'Diagram', 'diagram-options':'Diagram', order:'Ordering'};
+const ICON = {
+  x:'<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  stop:'<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="2"/></svg>',
+  pause:'<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>',
+  play:'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>',
+  skip:'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.5v11l7.5-5.5zM10 2.5h2.5v11H10z"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4 1.5 4.5 4"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>',
+  grip:'<svg viewBox="0 0 14 14" fill="currentColor"><circle cx="4.5" cy="3" r="1.3"/><circle cx="9.5" cy="3" r="1.3"/><circle cx="4.5" cy="7" r="1.3"/><circle cx="9.5" cy="7" r="1.3"/><circle cx="4.5" cy="11" r="1.3"/><circle cx="9.5" cy="11" r="1.3"/></svg>',
+  up:'<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 6.5 5 3.5l3 3"/></svg>',
+  down:'<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 3.5 5 6.5l3-3"/></svg>',
+  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 10 11l4 4 6-8"/><path d="M15 7h5v5"/></svg>',
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ordinal = n => n + (['th','st','nd','rd'][((n % 100) - 20) % 10] || ['th','st','nd','rd'][n % 100] || 'th');
+const fmt = n => n.toLocaleString('en-US');
+
+/* Diagram labels: "P₁", "Pₘₐₓ", "Pc" etc. are drawn as a big letter plus a readable subscript. */
+const SUBS = {'₀':'0','₁':'1','₂':'2','₃':'3','ₐ':'a','ₑ':'e','ᵢ':'i','ₗ':'L','ₘ':'m','ₙ':'n','ₓ':'x'};
+function lbl(t){
+  let base = '', sub = '';
+  for (const ch of t) { if (SUBS[ch]) sub += SUBS[ch]; else if (sub) base += ch; else base += ch; }
+  if (!sub && /^[PQL][cpsd]$/.test(t)) { base = t[0]; sub = t[1]; }   // Pc, Pp, Qs, Qd, Ld, Ls
+  return sub ? `${esc(base)}<tspan class="sb" dy="0.32em">${sub}</tspan>` : esc(base);
+}
+function svgMatrix(m, mini){
+  let s = `<svg class="diag${mini ? ' mini' : ''}" viewBox="0 0 352 270" role="img" aria-label="Game theory payoff matrix">`;
+  s += `<text x="58" y="44" text-anchor="middle" style="fill:#8f9dc4;font-size:15px">payoffs</text>`;
+  s += `<text x="58" y="62" text-anchor="middle" style="fill:#8f9dc4;font-size:15px">(${m.unit})</text>`;
+  m.cols.forEach((c,j) => s += `<text class="s" x="${112+58+j*116}" y="48" text-anchor="middle">B: ${c}</text>`);
+  m.rows.forEach((r,i) => s += `<text class="d" x="102" y="${58+50.5+i*101+7}" text-anchor="end">A: ${r}</text>`);
+  m.v.forEach((row,i) => row.forEach((v,j) => {
+    const x = 112 + j*116, y = 58 + i*101;
+    s += `<rect class="mxc" x="${x}" y="${y}" width="116" height="101" rx="4"/>`;
+    s += `<text class="d" x="${x+58}" y="${y+42}" text-anchor="middle">A: ${v[0]}</text><text class="s" x="${x+58}" y="${y+74}" text-anchor="middle">B: ${v[1]}</text>`;
+  }));
+  return s + '</svg>';
+}
+function svgDiagram(key, mini=false){
+  const d = DIAG[key]; if (d.matrix) return svgMatrix(d.matrix, mini);
+  const ys = d.ys || 22; const X = x => 66 + x * 26, Y = y => 230 - y * ys;
+  let s = `<svg class="diag${mini ? ' mini' : ''}" viewBox="0 0 352 270" role="img" aria-label="Economics diagram">`;
+  s += `<path class="ax" d="M66 14V230H330"/><path class="axh" d="M60 20 66 6 72 20z"/><path class="axh" d="M324 224 338 230 324 236z"/>`;
+  const areas = d.areas === 'six' ? AREAS6 : (d.areas || []);
+  areas.forEach((a,i) => s += `<path class="ar ${i%2?'ar2':''}" d="M${a.pts.map(([x,y]) => X(x)+' '+Y(y)).join('L')}z"/>`);
+  const [ya, xa] = d.axes || ['P','Q'];
+  s += `<text x="52" y="24" text-anchor="end">${ya}</text><text x="346" y="262" text-anchor="end">${xa}</text><text x="58" y="254" text-anchor="end">0</text>`;
+  (d.dots||[]).forEach(p => {
+    if (p.yl !== undefined) s += `<path class="guide" d="M66 ${Y(p.y)}H${X(p.x)}"/><text x="60" y="${Y(p.y)+6}" text-anchor="end">${lbl(p.yl)}</text>`;
+    if (p.xl !== undefined) s += `<path class="guide" d="M${X(p.x)} ${Y(p.y)}V230"/><text x="${X(p.x)}" y="256" text-anchor="middle">${lbl(p.xl)}</text>`;
+  });
+  (d.hlines||[]).forEach(h => s += `<line class="ln pc" x1="66" y1="${Y(h.y)}" x2="${X(9.4)}" y2="${Y(h.y)}"/><text class="pc" x="60" y="${Y(h.y)+6}" text-anchor="end">${lbl(h.label)}</text>`);
+  const label = (l, ax, ay, bx, by) => {
+    if (!l.label) return '';
+    const [tx, ty] = l.lp ? [X(l.lp[0]), Y(l.lp[1])] : [X(bx)+7, Y(by) + (by > ay ? 4 : 16)];
+    return `<text class="${l.k}${l.old?' old':''}" x="${tx}" y="${ty}"${l.alt?' style="fill:#7aa8ff"':''}>${lbl(l.label)}</text>`;
+  };
+  (d.lines||[]).forEach(l => {
+    const cls = `${l.k}${l.old?' old':''}`;
+    s += `<line class="ln ${cls}" x1="${X(l.a[0])}" y1="${Y(l.a[1])}" x2="${X(l.b[0])}" y2="${Y(l.b[1])}"${l.dash?' stroke-dasharray="7 6"':''}${l.alt?' style="stroke:#7aa8ff"':''}/>`;
+    s += label(l, l.a[0], l.a[1], l.b[0], l.b[1]);
+  });
+  (d.curves||[]).forEach(c => {
+    const pts = []; for (let i = 0; i <= 48; i++) { const x = c.x0 + (c.x1 - c.x0) * i / 48; pts.push(X(x).toFixed(1) + ' ' + Y(c.f(x)).toFixed(1)); }
+    s += `<path class="ln ${c.k}" d="M${pts.join('L')}"/>` + label(c, c.x0, c.f(c.x0), c.x1, c.f(c.x1));
+  });
+  (d.texts||[]).forEach(t => s += `<text class="${t.k||''}" x="${X(t.x)}" y="${Y(t.y)+6}" text-anchor="${t.anchor||'start'}">${lbl(t.t)}</text>`);
+  areas.filter(a => a.l).forEach(a => s += `<text class="al" x="${X(a.at[0])}" y="${Y(a.at[1])+8}" text-anchor="middle">${a.l}</text>`);
+  (d.dots||[]).forEach(p => s += `<circle class="dot" cx="${X(p.x)}" cy="${Y(p.y)}" r="5.5"/>`);
+  if (d.arrow) {
+    const [[x1,y1],[x2,y2]] = d.arrow; const ax = X(x1), ay = Y(y1), bx = X(x2), by = Y(y2);
+    const ang = Math.atan2(by - ay, bx - ax), h = 11;
+    const p1 = [bx - h*Math.cos(ang - .5), by - h*Math.sin(ang - .5)], p2 = [bx - h*Math.cos(ang + .5), by - h*Math.sin(ang + .5)];
+    s += `<line class="arr" x1="${ax}" y1="${ay}" x2="${bx - 5*Math.cos(ang)}" y2="${by - 5*Math.sin(ang)}"/><path class="arrh" d="M${bx} ${by}L${p1}L${p2}z"/>`;
+  }
+  return s + '</svg>';
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const MAX_PLAYERS = 25;
+const S = {
+  phase:'setup', paused:false,
+  settings:{concepts:new Set(SYLLABUS.flatMap(u => u.subs).flatMap(s => s.concepts).map(c => c.id)), hl:true, count:10, time:20, bots:24},
+  pin:'', players:[], botTarget:0, nextBotAt:0, lobbyClock:0,
+  questions:[], qi:0, elapsed:0, answers:{}, plan:{}, doneAt:null, results:{},
+  you:{joined:false, name:''}, myOrder:[], showStudent:true,
+  live:false, room:null, connecting:false, netError:'',
+};
+/* Student-side live state */
+const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, removed:false, scores:{}, answered:-1, myAns:null, unsubs:[]};
+/* =========================================================
+   NETWORK — live games through Firebase.
+   Students open the page normally; the teacher adds ?host to the address.
+   ?net=local swaps Firebase for a stand-in that links browser tabs (for testing).
+   ========================================================= */
+const PARAMS = new URLSearchParams(location.search);
+const ROLE = PARAMS.has('host') ? 'host' : 'student';
+const LOCAL_NET = PARAMS.get('net') === 'local';
+const FB_VERSION = '10.12.2';
+const liveAvailable = () => LOCAL_NET || !!window.FIREBASE_CONFIG;
+const clean = o => JSON.parse(JSON.stringify(o));
+const pageUrl = () => location.href.split('#')[0].split('?')[0];
+const studentUrl = () => pageUrl() + (LOCAL_NET ? '?net=local' : '');
+const hostUrl = () => pageUrl() + '?host' + (LOCAL_NET ? '&net=local' : '');
+let NET = null, netPromise = null;
+function getNet(){
+  if (!netPromise) netPromise = (LOCAL_NET ? Promise.resolve(makeLocalNet()) : makeFirebaseNet(window.FIREBASE_CONFIG))
+    .then(n => (NET = n)).catch(err => { netPromise = null; throw err; });
+  return netPromise;
+}
+async function makeFirebaseNet(cfg){
+  if (!cfg) throw new Error('not-configured');
+  const base = `https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
+  let app, auth, db;
+  try { [app, auth, db] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-database.js')]); }
+  catch (e) { throw new Error('offline'); }
+  const fa = app.initializeApp(cfg);
+  const cred = await auth.signInAnonymously(auth.getAuth(fa));
+  const d = db.getDatabase(fa); const r = path => db.ref(d, path);
+  return { uid: cred.user.uid,
+    set: (path, v) => db.set(r(path), v), update: (path, o) => db.update(r(path), o), remove: path => db.remove(r(path)),
+    get: async path => (await db.get(r(path))).val(),
+    on: (path, cb) => db.onValue(r(path), snap => cb(snap.val())) };
+}
+function makeLocalNet(){
+  const KEY = 'erl-localdb', listeners = new Set();
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+  const parts = path => path.split('/').filter(Boolean);
+  const getAt = (db, path) => parts(path).reduce((o, k) => (o == null || o[k] === undefined) ? null : o[k], db);
+  const setAt = (db, path, v) => { const ks = parts(path); let o = db;
+    for (let i = 0; i < ks.length - 1; i++) { if (typeof o[ks[i]] !== 'object' || o[ks[i]] === null) o[ks[i]] = {}; o = o[ks[i]]; }
+    if (v === null || v === undefined) delete o[ks[ks.length-1]]; else o[ks[ks.length-1]] = clean(v); };
+  const notify = () => { const db = load(); listeners.forEach(l => { const v = getAt(db, l.path), j = JSON.stringify(v); if (j !== l.last) { l.last = j; l.cb(v === null ? null : JSON.parse(j)); } }); };
+  window.addEventListener('storage', e => { if (e.key === KEY) notify(); });
+  const write = fn => { const db = load(); fn(db); localStorage.setItem(KEY, JSON.stringify(db)); setTimeout(notify, 0); return Promise.resolve(); };
+  let uid = sessionStorage.getItem('erl-uid'); if (!uid) { uid = 'u' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('erl-uid', uid); }
+  return { uid,
+    set: (path, v) => write(db => setAt(db, path, v)),
+    update: (path, o) => write(db => Object.entries(o).forEach(([k, v]) => setAt(db, path + '/' + k, v))),
+    remove: path => write(db => setAt(db, path, null)),
+    get: path => Promise.resolve(getAt(load(), path)),
+    on: (path, cb) => { const l = {path, cb, last:undefined}; listeners.add(l);
+      setTimeout(() => { const v = getAt(load(), path); l.last = JSON.stringify(v); cb(v); }, 0); return () => listeners.delete(l); } };
+}
+function friendlyNetError(err){
+  const m = String((err && (err.code || err.message)) || err);
+  if (m === 'not-configured') return 'Live games aren’t connected to Firebase yet (firebase-config.js is missing).';
+  if (m === 'offline') return 'Couldn’t reach Firebase. Check your internet connection and try again.';
+  if (/operation-not-allowed|admin-restricted/.test(m)) return 'Anonymous sign-in isn’t switched on in Firebase (Authentication → Sign-in method → Anonymous).';
+  if (/unauthorized-domain|requests-from-referer|referer/.test(m)) return 'This web address isn’t on Firebase’s list of authorised domains (Authentication → Settings → Authorised domains).';
+  if (/permission|PERMISSION_DENIED/i.test(m)) return 'Firebase refused the request. Check that the security rules have been published.';
+  if (/network-request-failed/.test(m)) return 'Network problem: couldn’t reach Firebase. Check your connection.';
+  return 'Something went wrong connecting to Firebase: ' + m;
+}
+
+const conceptCount = id => BANK.filter(q => q.concept === id && (S.settings.hl || q.level !== 'HL')).length;
+const pool = () => BANK.filter(q => S.settings.concepts.has(q.concept) && (S.settings.hl || q.level !== 'HL'));
+const cur = () => S.questions[S.qi];
+const activePlayers = () => S.players;
+
+/* =========================================================
+   HOST VIEWS
+   ========================================================= */
+function vSetup(){
+  const avail = pool().length; const n = Math.min(S.settings.count, avail);
+  const unitHtml = SYLLABUS.map(u => {
+    const all = u.subs.flatMap(s => s.concepts.map(c => c.id));
+    const sel = all.filter(id => S.settings.concepts.has(id));
+    const total = all.reduce((t,id) => t + conceptCount(id), 0);
+    const st = !all.length ? 'off' : sel.length === all.length ? 'all' : sel.length ? 'some' : 'none';
+    const subs = u.subs.length ? `<div class="subs">${u.subs.map(s => {
+      const ids = s.concepts.map(c => c.id); const ssel = ids.filter(id => S.settings.concepts.has(id));
+      const sst = !ids.length ? 'off' : ssel.length === ids.length ? 'all' : ssel.length ? 'some' : 'none';
+      return `<div class="sub ${ids.length ? 'on' : 'off'}">
+        <input type="checkbox" class="cb" data-sub="${s.id}" ${sst==='all'?'checked':''} ${sst==='some'?'data-ind="1"':''} ${sst==='off'?'disabled':''} aria-label="${esc(s.name)}">
+        <span class="num">${s.id}</span><span>${esc(s.name)}</span>${s.hl?' <span class="hl-tag">HL</span>':''}
+        ${ids.length ? '' : '<span class="soon">Coming soon</span>'}</div>
+        ${ids.length ? `<div class="concepts">${s.concepts.map(c => `<label class="concept">
+          <input type="checkbox" class="cb" data-concept="${c.id}" ${S.settings.concepts.has(c.id)?'checked':''}>
+          <span>${esc(c.name)}</span><span class="n">${conceptCount(c.id)} questions</span></label>`).join('')}</div>` : ''}`;
+    }).join('')}</div>` : '';
+    return `<div class="unit ${all.length ? '' : 'off'}"><div class="unit-head">
+      <input type="checkbox" class="cb" data-unit="${u.id}" ${st==='all'?'checked':''} ${st==='some'?'data-ind="1"':''} ${st==='off'?'disabled':''} aria-label="${esc(u.name)}">
+      <span>${esc(u.name)}</span><span class="count">${all.length ? `${total} questions` : 'Coming soon'}</span></div>${subs}</div>`;
+  }).join('');
+  const pct = (v,min,max) => ((v-min)/(max-min)*100) + '%';
+  return `<div class="setup fade-in">
+    <div class="setup-intro"><div class="eyebrow">New game</div><h1>What are we revising today?</h1>
+      <div class="muted">Tick a whole unit, a subtopic or a single concept. Questions are picked at random from what you tick.</div></div>
+    <div class="tree">${unitHtml}</div>
+    <div class="settings card">
+      <div class="field"><label>Game mode <span>${S.settings.mode==='live' ? 'students join on their own laptops' : 'you plus practice bots'}</span></label>
+        <div class="seg"><button data-mode="live" class="${S.settings.mode==='live'?'on':''}" ${liveAvailable()?'':'disabled'}>Live game</button><button data-mode="practice" class="${S.settings.mode==='practice'?'on':''}">Practice</button></div>
+        ${liveAvailable() ? '' : '<div class="muted" style="font-size:12px;margin-top:8px">Live games need firebase-config.js next to this file.</div>'}</div>
+      <div class="field"><label>Level</label>
+        <div class="seg"><button data-hl="0" class="${!S.settings.hl?'on':''}">SL only</button><button data-hl="1" class="${S.settings.hl?'on':''}">SL + HL</button></div></div>
+      <div class="field"><label>Questions <span>${n} of ${avail} available</span></label>
+        <input type="range" id="rCount" min="1" max="${Math.max(avail,1)}" value="${n}" style="--p:${pct(n,1,Math.max(avail,2))}" ${avail?'':'disabled'}></div>
+      <div class="field"><label>Time per question <span>ordering & calculations get extra time</span></label>
+        <div class="seg">${[10,20,30,45].map(t => `<button data-time="${t}" class="${S.settings.time===t?'on':''}">${t}s</button>`).join('')}</div></div>
+      ${S.settings.mode==='practice' ? `<div class="field"><label>Practice bots <span>${S.settings.bots} + you</span></label>
+        <input type="range" id="rBots" min="0" max="24" value="${S.settings.bots}" style="--p:${pct(S.settings.bots,0,24)}"></div>` : ''}
+      <div class="summary">
+        <div class="stat"><b>${n}</b><small>questions</small></div>
+        <div class="stat"><b>${pool().filter(q=>q.double).length}</b><small>double-point Qs in pool</small></div>
+        <div class="stat"><b>${S.settings.mode==='live' ? MAX_PLAYERS : S.settings.bots + 1}</b><small>players max</small></div>
+      </div>
+      <button class="btn wide" id="hostPrimary" ${n?'':'disabled'}>Open the lobby</button>
+    </div></div>`;
+}
+
+function vLobby(){
+  const ps = activePlayers();
+  if (S.live && S.netError) return `<div class="lobby fade-in"><div class="net-err"><h2>Couldn’t start a live game</h2><p>${esc(S.netError)}</p>
+    <div class="end-btns"><button class="btn" data-act="retryLive">Try again</button><button class="icon-btn" data-act="back">Back to setup</button></div></div></div>`;
+  if (S.live && !S.pin) return `<div class="lobby fade-in"><div class="pin-card"><small>Creating your game…</small><div class="pin">••• •••</div></div></div>`;
+  const where = S.live ? `<span class="join-url">${esc(studentUrl())}</span>` : '<b>econrules · play</b>';
+  return `<div class="lobby fade-in">
+    <div class="pin-card"><small>Join at ${where} with game PIN</small><div class="pin">${S.pin.slice(0,3)} ${S.pin.slice(3)}</div></div>
+    <div class="lobby-meta">
+      <div class="count">${ICON.people}<span>${ps.length}</span><span class="muted" style="font-size:16px">/ ${MAX_PLAYERS} players</span></div>
+      <div class="spacer"></div>
+      <button class="icon-btn" data-act="back">Back to setup</button>
+      <button class="btn" id="hostPrimary" ${ps.length?'':'disabled'}>Start game <kbd>Space</kbd></button>
+    </div>
+    <div class="roster">${ps.length ? ps.map(p => `<span class="pchip ${p.id==='you'?'me':''} ${shownChips.has(p.id)?'':'new'}">${esc(p.name)}
+      <button class="x" data-remove="${p.id}" title="Remove ${esc(p.name)}">${ICON.x}</button></span>`).join('')
+      : '<div class="empty">Waiting for players to join…</div>'}</div></div>`;
+}
+
+function qHead(q, extra=''){
+  return `<div class="qhead">
+    <span class="chip">Question ${S.qi+1} of ${S.questions.length}</span>
+    <span class="chip">${SHORT[q.concept]}</span><span class="chip">${TYPE_LABEL[q.type]}</span>
+    ${q.level==='HL'?'<span class="chip hl">HL</span>':''}${q.double?'<span class="chip dbl">★ Double points</span>':''}
+    <div class="ctrl">${extra}<button class="icon-btn end" data-act="end">${ICON.stop}End game</button></div></div>
+    <div class="progress"><i style="width:${(S.qi)/S.questions.length*100}%"></i></div>`;
+}
+
+function vGetReady(){
+  const q = cur();
+  return `<div class="ready">
+    <div class="eyebrow">Question ${S.qi+1} of ${S.questions.length} · ${SHORT[q.concept]} · ${TYPE_LABEL[q.type]}</div>
+    ${q.double ? '<div class="double-burst">★ DOUBLE POINTS ★<small>THIS ONE IS WORTH 2×</small></div>' : '<div class="big pop">Get ready…</div>'}
+    <div class="bar"><i></i></div>
+    <button class="icon-btn end" data-act="end" style="margin-top:8px">${ICON.stop}End game</button></div>`;
+}
+
+function optTile(q, d, i, state=''){
+  const tick = state==='right' ? `<span class="tick">${ICON.check}</span>` : '';
+  if (q.type === 'diagram-options')
+    return `<div class="opt dgo o${i} ${state}"><div class="top">${SHAPES[i]}<span>${LETTERS[i]}</span>${tick}</div><div class="mini">${svgDiagram(d.diagram, true)}</div></div>`;
+  return `<div class="opt o${i} ${state}">${SHAPES[i]}<span>${esc(d.text)}</span>${tick}</div>`;
+}
+
+function vQuestion(){
+  const q = cur(); const T = q.T;
+  const ctrl = `<button class="icon-btn" data-act="pause">${S.paused?ICON.play+'Resume':ICON.pause+'Pause'}</button>
+    <button class="icon-btn" data-act="skip">${ICON.skip}Skip</button>`;
+  const ring = `<div class="ring" id="ring"><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/>
+    <circle class="bar" id="ringBar" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="lbl" id="ringLbl">${Math.ceil(T)}</div></div>`;
+  const answered = `<div class="answered"><b id="ansCount">0</b><small>of ${activePlayers().length} answered</small></div>`;
+  let body;
+  if (q.type === 'order') {
+    body = `<div class="qmid nodiag">${ring}<div class="muted" style="text-align:center">Drag the items into the right order on your laptop</div>${answered}</div>
+      <div class="olist">${q.shown.map((t,i) => `<div class="oitem" style="--oc:var(--c${i%4})"><span class="badge">${LETTERS[i] || i+1}</span>${esc(t)}</div>`).join('')}</div>`;
+  } else {
+    const mid = q.type === 'diagram' ? `<div class="diag-card">${svgDiagram(q.diagram)}</div>` : '<div></div>';
+    body = `<div class="qmid ${q.type==='diagram'?'':'nodiag'}">${ring}${mid}${answered}</div>
+      <div class="opts ${q.type==='diagram-options'?'four':''}">${q.disp.map((d,i) => optTile(q,d,i)).join('')}</div>`;
+  }
+  return `<div class="fade-in">${qHead(q, ctrl)}<h2 class="qtext">${esc(q.q)}</h2>${body}</div>${S.paused && !S.confirmEnd ? pausedOverlay() : ''}`;
+}
+
+function pausedOverlay(){
+  return `<div class="paused"><h2>Paused</h2><div class="muted">The timer is frozen for everyone.</div>
+    <button class="btn" data-act="pause">${ICON.play} Resume</button></div>`;
+}
+
+function vReveal(){
+  const q = cur(); const ps = activePlayers(); const last = S.qi === S.questions.length - 1;
+  const ctrl = `<button class="btn sm" id="hostPrimary">${last ? 'Final results' : 'Leaderboard'} <kbd>Space</kbd></button>`;
+  const why = `<div class="why fade-in"><div class="ic">${ICON.bulb}</div><div><h3>Why</h3><p>${esc(q.exp)}</p>
+    ${q.rw ? `<div class="rw"><h3>${ICON.globe} In the real world</h3><p>${esc(q.rw)}</p></div>` : ''}</div></div>`;
+  if (q.type === 'order') {
+    const rs = ps.map(p => S.results[p.id]).filter(Boolean);
+    const full = rs.filter(r => r.frac === 1).length, partial = rs.filter(r => r.frac > 0 && r.frac < 1).length;
+    const avg = rs.length ? rs.reduce((t,r) => t + r.frac * q.items.length, 0) / rs.length : 0;
+    return `<div class="fade-in">${qHead(q, ctrl)}<h2 class="qtext">${esc(q.q)}</h2>
+      <div class="reveal-row"><div class="olist">${q.items.map((t,i) => `<div class="oitem ok" style="animation:fadeIn .4s ${i*.12}s both"><span class="badge">${i+1}</span>${esc(t)}</div>`).join('')}</div>
+      <div style="display:flex;flex-direction:column;gap:16px"><div class="ostats">
+        <div class="stat"><b>${full}</b><small>fully correct</small></div>
+        <div class="stat"><b>${partial}</b><small>partly correct</small></div>
+        <div class="stat"><b>${avg.toFixed(1)}/${q.items.length}</b><small>avg. items in place</small></div></div>${why}</div></div></div>`;
+  }
+  const counts = q.disp.map((_,i) => ps.filter(p => S.answers[p.id] && S.answers[p.id].choice === i).length);
+  const max = Math.max(1, ...counts);
+  const bars = `<div class="card"><div class="bars">${counts.map((c,i) => `<div class="bcol o${i} ${i===q.correct?'':'lose'}">
+    <span class="v">${c}</span><div class="b" style="height:${Math.max(4, c/max*110)}px;animation-delay:${i*.08}s"></div>
+    <span class="k">${SHAPES[i]}${i===q.correct?`<svg class="ok" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`:''}</span></div>`).join('')}</div></div>`;
+  const side = q.type === 'diagram' ? `<div style="display:flex;flex-direction:column;gap:16px"><div class="diag-card" style="width:100%;max-width:330px">${svgDiagram(q.diagram)}</div></div>` : why;
+  return `<div class="fade-in">${qHead(q, ctrl)}<h2 class="qtext">${esc(q.q)}</h2>
+    <div class="reveal-row">${bars}${side}</div>
+    ${q.type==='diagram' ? `<div style="margin-bottom:18px">${why}</div>` : ''}
+    <div class="opts ${q.type==='diagram-options'?'four':''}">${q.disp.map((d,i) => optTile(q,d,i, i===q.correct?'right':'dim')).join('')}</div></div>`;
+}
+
+function ranked(){ return [...activePlayers()].sort((a,b) => b.score - a.score || a.name.localeCompare(b.name)); }
+
+function vLeaderboard(){
+  const r = ranked(); const top = r.slice(0,5); const meIdx = r.findIndex(p => p.id === 'you');
+  const row = (p,i) => {
+    const mv = p.prevRank && p.prevRank !== i+1 ? (p.prevRank > i+1 ? `<span class="mv up">▲${p.prevRank-(i+1)}</span>` : `<span class="mv dn">▼${(i+1)-p.prevRank}</span>`) : '<span class="mv"></span>';
+    return `<div class="lbrow r${i+1} ${p.id==='you'?'me':''}" style="animation-delay:${i*.07}s"><span class="rk">${i+1}</span>
+      <span class="nm">${esc(p.name)}</span>${p.gain?`<span class="gain">+${fmt(p.gain)}</span>`:''}${mv}<span class="sc">${fmt(p.score)}</span>
+      <button class="x" data-remove="${p.id}" title="Remove ${esc(p.name)}">${ICON.x}</button></div>`;
+  };
+  return `<div class="fade-in">${qHead(cur(), `<button class="btn sm" id="hostPrimary">Next question <kbd>Space</kbd></button>`)}
+    <h2 class="qtext" style="margin-bottom:6px">Leaderboard</h2>
+    <div class="lb">${top.map(row).join('')}${meIdx >= 5 ? `<div class="lbgap">• • •</div>${row(r[meIdx], meIdx)}` : ''}</div></div>`;
+}
+
+function vPodium(){
+  const r = ranked(); const col = (p, cls, n) => p ? `<div class="pcol ${cls}"><div class="pn">${esc(p.name)}</div><div class="ps">${fmt(p.score)} pts</div><div class="blk">${n}</div></div>` : `<div class="pcol ${cls}"></div>`;
+  const colors = ['#ff5470','#3d86ff','#ffad2e','#1fc79a','#3ad6ff','#fff'];
+  const conf = Array.from({length:70}, () => `<i style="left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2.5+Math.random()*2.5}s;animation-delay:${1+Math.random()*1.5}s;transform:rotate(${Math.random()*360}deg)"></i>`).join('');
+  return `<div class="confetti">${conf}</div><div class="fade-in" style="text-align:center">
+    <div class="eyebrow">Game over · ${S.played} question${S.played === 1 ? '' : 's'}</div><h2 class="qtext" style="margin:8px 0 0">Final results</h2>
+    <div class="podium">${col(r[1],'p2',2)}${col(r[0],'p1',1)}${col(r[2],'p3',3)}</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:18px"><button class="btn" data-act="again">Play again</button><button class="icon-btn" data-act="new">New game</button></div>
+    ${r.length > 3 ? `<div class="rest">${r.slice(3).map((p,i) => `<div class="${p.id==='you'?'me':''}"><b>${i+4}</b><span>${esc(p.name)}</span><em>${fmt(p.score)}</em></div>`).join('')}</div>` : ''}</div>`;
+}
+
+/* =========================================================
+   STUDENT VIEWS
+   ========================================================= */
+function sView(){
+  const q = cur(); const me = S.players.find(p => p.id === 'you');
+  const header = q ? `<div class="s-top"><b>${esc(S.you.name)}</b><span class="sp"></span>${me?`${fmt(me.score)} pts`:''}</div>` : '';
+  switch (S.phase) {
+    case 'setup':
+      return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>EconRules Live</h2><div class="muted">Waiting for your teacher to open a game…</div></div>`;
+    case 'lobby':
+      if (!S.you.joined) return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>Join the game</h2>
+        <div class="join-form" id="joinForm"><input class="input" value="${S.pin}" aria-label="Game PIN" readonly>
+        <input class="input" id="nick" maxlength="15" placeholder="Your nickname" autocomplete="off" value="${esc(S.you.name)}">
+        <button class="btn wide" data-act="join" ${activePlayers().length >= MAX_PLAYERS ? 'disabled' : ''}>${activePlayers().length >= MAX_PLAYERS ? 'Room is full' : 'Join'}</button></div></div>`;
+      return `<div class="s-center"><div class="result-ic ok">${ICON.check.replace('<svg','<svg style="stroke:#fff"')}</div><h2>You’re in!</h2><div class="muted">Look for <b style="color:var(--text)">${esc(S.you.name)}</b> on the big screen.</div></div>`;
+  }
+  if (!S.you.joined) return `<div class="s-center"><div class="s-logo">${ICON.logo}</div><h2>Game in progress</h2><div class="muted">You can join the next game.</div></div>`;
+  if (S.phase === 'getready') return `${header}<div class="s-center"><div class="eyebrow">Question ${S.qi+1}</div>
+    ${q.double ? '<div class="double-burst" style="font-size:30px">★ 2× POINTS ★</div>' : '<h2 class="pop">Get ready…</h2>'}</div>`;
+  if (S.phase === 'question') {
+    const mine = S.answers.you;
+    const pausedHtml = S.paused ? `<div class="paused"><h2 style="font-size:28px">Paused</h2></div>` : '';
+    if (mine) return `${header}<div class="s-center"><div class="s-logo" style="animation:pulse 1.8s infinite">${ICON.logo}</div><h2>Answer locked in</h2><div class="muted">Waiting for everyone else…</div></div>${pausedHtml}`;
+    let ui;
+    if (q.type === 'order') {
+      ui = `<div class="slist" id="slist">${S.myOrder.map((t,i) => `<div class="sitem" draggable="true" tabindex="0" data-i="${i}">
+        <span class="grip">${ICON.grip}</span><span class="num">${i+1}</span><span class="t">${esc(t)}</span>
+        <span class="mvb"><button data-mv="${i}:-1" ${i===0?'disabled':''} aria-label="Move up">${ICON.up}</button><button data-mv="${i}:1" ${i===S.myOrder.length-1?'disabled':''} aria-label="Move down">${ICON.down}</button></span></div>`).join('')}</div>
+        <button class="btn wide" data-act="submitOrder">Submit order</button><div class="hint">Drag, use the arrows, or focus an item and press ↑ ↓</div>`;
+    } else {
+      ui = `${q.type==='diagram' ? `<div class="s-diag">${svgDiagram(q.diagram)}</div>` : ''}
+        <div class="s-opts ${q.type==='diagram-options'?'grid2':''}">${q.disp.map((d,i) => q.type==='diagram-options'
+          ? `<button class="sopt dgo o${i}" data-pick="${i}"><span class="top">${SHAPES[i]}${LETTERS[i]}<kbd>${i+1}</kbd></span><span class="mini">${svgDiagram(d.diagram, true)}</span></button>`
+          : `<button class="sopt o${i}" data-pick="${i}">${SHAPES[i]}<span>${esc(d.text)}</span><kbd>${i+1}</kbd></button>`).join('')}</div>`;
+    }
+    return `${header}<div class="s-timer"><i id="sTimer" style="width:100%"></i></div><p class="s-q">${esc(q.q)}</p>${ui}${pausedHtml}`;
+  }
+  const r = ranked(); const rank = r.findIndex(p => p.id === 'you') + 1;
+  if (S.phase === 'reveal') {
+    const res = S.results.you || {frac:0, pts:0};
+    const kind = res.frac === 1 ? 'ok' : res.frac > 0 ? 'part' : 'no';
+    const title = !S.answers.you ? 'Time’s up' : kind === 'ok' ? 'Correct!' : kind === 'part' ? `${Math.round(res.frac*q.items.length)} of ${q.items.length} in place` : 'Not quite';
+    const icon = kind === 'no' ? '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    return `${header}<div class="s-center"><div class="result-ic ${kind}">${icon}</div><h2>${title}</h2>
+      <div class="pts pop">+${fmt(res.pts)}</div>${q.double && res.pts ? '<span class="chip dbl">★ Double points</span>' : ''}
+      <div class="muted">You’re in <b style="color:var(--text)">${ordinal(rank)}</b> place of ${r.length}</div>
+      <div class="s-why"><b style="color:var(--good)">Why: </b>${esc(q.exp)}${q.rw ? `<div class="s-rw"><b>In the real world: </b>${esc(q.rw)}</div>` : ''}</div></div>`;
+  }
+  if (S.phase === 'leaderboard') return `${header}<div class="s-center"><div class="muted">You’re in</div><div class="s-rank pop">${ordinal(rank)}</div>
+    <div class="muted">${fmt(me.score)} points · ${rank > 1 ? `${fmt(r[rank-2].score - me.score)} behind ${esc(r[rank-2].name)}` : 'out in front!'}</div></div>`;
+  if (S.phase === 'podium') return `<div class="s-center"><div class="muted">You finished</div><div class="s-rank pop">${ordinal(rank)}</div>
+    <div class="muted">of ${r.length} players · ${fmt(me.score)} points</div>${rank <= 3 ? '<span class="chip dbl">★ On the podium!</span>' : ''}</div>`;
+  return '';
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+/* Only play the fade-in when the screen actually changes, not on every refresh. */
+let lastHostPhase = null;
+const shownChips = new Set();
+function endDialog(){
+  const played = S.played;
+  return `<div class="paused end-dialog"><h2>End the game now?</h2>
+    <div class="muted">${played} of ${S.questions.length} questions played. The timer is paused while you decide.</div>
+    <div class="end-btns">
+      <button class="btn" data-act="endResults" ${played ? '' : 'disabled'}>Show final results</button>
+      <button class="icon-btn" data-act="endSetup">Back to setup</button>
+      <button class="icon-btn" data-act="endCancel">Keep playing</button>
+    </div>${played ? '' : '<div class="muted" style="font-size:13px">No questions finished yet, so there are no results to show.</div>'}</div>`;
+}
+function renderHost(){
+  const v = {setup:vSetup, lobby:vLobby, getready:vGetReady, question:vQuestion, reveal:vReveal, leaderboard:vLeaderboard, podium:vPodium}[S.phase];
+  const key = S.phase + ':' + S.qi;
+  if (S.phase !== 'lobby') shownChips.clear();
+  $('#host').classList.toggle('still', key === lastHostPhase); lastHostPhase = key;
+  $('#host').innerHTML = v() + (S.confirmEnd ? endDialog() : '');
+  if (S.phase === 'lobby') S.players.forEach(p => shownChips.add(p.id));
+  $('#host').querySelectorAll('[data-ind]').forEach(el => el.indeterminate = true);
+}
+function renderStudent(){ $('#student').innerHTML = ROLE === 'student' ? studentLiveView() : sView(); if (ROLE === 'host') updateTabs(); }
+/* On narrow windows: light up the Student tab when the student has something to do. */
+function updateTabs(){
+  const need = (S.phase === 'lobby' && !S.you.joined) || (S.phase === 'question' && S.you.joined && !S.answers.you);
+  $('#viewTabs').classList.toggle('need', need && !$('#stage').classList.contains('show-student'));
+}
+function render(){
+  if (ROLE === 'student') return renderStudent();
+  renderHost(); renderStudent(); pushState();
+}
+function applyLayout(){
+  document.body.classList.toggle('student-mode', ROLE === 'student');
+  const solo = ROLE === 'host' && (S.settings.mode === 'live' || !S.showStudent);
+  $('#stage').classList.toggle('solo', solo);
+  $('#toggleStudent').style.display = ROLE === 'host' && S.settings.mode === 'live' ? 'none' : '';
+  $('#modePill').innerHTML = S.settings.mode === 'live' ? 'Live game · <b>students join on their laptops</b>' : 'Practice mode · <b>bots</b> fill the room';
+}
+
+/* =========================================================
+   GAME FLOW
+   ========================================================= */
+function openLobby(){
+  S.live = S.settings.mode === 'live';
+  if (S.live) return openLiveLobby();
+  S.pin = String(100000 + Math.floor(Math.random()*900000));
+  S.players = S.you.joined ? S.players.filter(p => p.id === 'you') : [];
+  if (!S.you.joined) S.players = [];
+  S.botTarget = S.settings.bots; S.lobbyClock = 0; S.nextBotAt = .6;
+  S.phase = 'lobby'; render();
+}
+
+async function openLiveLobby(){
+  S.phase = 'lobby'; S.players = []; S.pin = ''; S.netError = ''; S.botTarget = 0; render();
+  try {
+    const net = await getNet(); let pin;
+    for (let i = 0; i < 10; i++) { pin = String(100000 + Math.floor(Math.random()*900000)); if (!(await net.get(`rooms/${pin}/host`))) break; }
+    await net.set(`rooms/${pin}`, {host:net.uid, created:Date.now(), state:{phase:'lobby', qi:0, total:0, paused:false}});
+    S.room = `rooms/${pin}`; S.pin = pin;
+    S.unsubPlayers = net.on(`${S.room}/players`, v => onPlayers(v || {}));
+  } catch (err) { S.netError = friendlyNetError(err); }
+  render();
+}
+function onPlayers(v){
+  const entries = Object.entries(v).sort((a,b) => (a[1].joinedAt||0) - (b[1].joinedAt||0));
+  if (S.phase === 'lobby' && entries.length > MAX_PLAYERS) entries.slice(MAX_PLAYERS).forEach(([id]) => NET.remove(`${S.room}/players/${id}`));
+  const old = new Map(S.players.map(p => [p.id, p]));
+  S.players = entries.slice(0, MAX_PLAYERS).map(([id, p]) => old.get(id) || {id, name:String(p.name || 'Player').slice(0,15), score:0, gain:0, prevRank:0});
+  if (S.phase === 'lobby') renderHost(); else updateLive();
+}
+function closeRoom(){
+  if (S.unsubPlayers) S.unsubPlayers(); if (S.unsubAns) S.unsubAns();
+  S.unsubPlayers = S.unsubAns = null;
+  if (S.live && S.room && NET) NET.remove(S.room).catch(() => {});
+  S.room = null; S.pin = '';
+}
+/* What students may see: never the answer until the reveal. */
+function pubQ(q, withAnswer){
+  const o = {id:q.id, concept:q.concept, level:q.level, type:q.type, q:q.q, T:q.T, double:!!q.double};
+  if (q.diagram) o.diagram = q.diagram;
+  if (q.type === 'order') o.shown = q.shown; else o.disp = q.disp.map(d => d.diagram ? {diagram:d.diagram} : {text:d.text});
+  if (withAnswer) { o.exp = q.exp; if (q.rw) o.rw = q.rw; if (q.type === 'order') o.items = q.items; else o.correct = q.correct; }
+  return o;
+}
+let lastPushed = '';
+function pushState(){
+  if (ROLE !== 'host' || !S.live || !S.room || !NET) return;
+  const q = cur(); const st = {phase:S.phase, qi:S.qi, qs:String(S.qi), total:S.questions.length, paused:!!S.paused};
+  if (q && S.phase !== 'lobby') st.q = pubQ(q, ['reveal','leaderboard','podium'].includes(S.phase));
+  if (S.phase === 'question') st.left = +Math.max(0, q.T - S.elapsed).toFixed(1);
+  const j = JSON.stringify(st); if (j === lastPushed) return; lastPushed = j;
+  NET.set(`${S.room}/state`, clean(st)).catch(() => {});
+}
+
+function addBot(){
+  const used = new Set(S.players.map(p => p.name));
+  const name = shuffle(BOT_NAMES).find(n => !used.has(n)); if (!name) return;
+  S.players.push({id:'b'+Math.random().toString(36).slice(2,8), name, bot:true, skill:.45 + Math.random()*.47, score:0});
+}
+
+function buildQuestions(){
+  const T = S.settings.time;
+  return shuffle(pool()).slice(0, S.settings.count).map(src => {
+    const q = {...src};
+    q.T = T * (q.time || (q.type === 'order' ? 1.5 : 1));
+    if (q.type === 'order') {
+      let shown; do { shown = shuffle(q.items); } while (shown.every((t,i) => t === q.items[i]));
+      q.shown = shown;
+    } else {
+      const base = q.type === 'diagram-options' ? q.optionDiagrams.map(d => ({diagram:d})) : q.options.map(t => ({text:t}));
+      const perm = shuffle(base.map((_,i) => i));
+      q.disp = perm.map(i => ({...base[i], orig:i}));
+      q.correct = perm.indexOf(q.answer);
+    }
+    return q;
+  });
+}
+
+function startGame(){
+  S.played = 0; S.confirmEnd = false;
+  if (S.live && S.room) { NET.remove(`${S.room}/answers`).catch(() => {}); NET.remove(`${S.room}/scores`).catch(() => {}); }
+  S.questions = buildQuestions(); S.qi = 0;
+  S.players.forEach(p => { p.score = 0; p.gain = 0; p.prevRank = 0; });
+  getReady();
+}
+function getReady(){ S.phase = 'getready'; S.elapsed = 0; S.paused = false; render(); }
+
+function startQuestion(){
+  const q = cur(); S.phase = 'question'; S.elapsed = 0; S.answers = {}; S.results = {}; S.doneAt = null;
+  if (q.type === 'order') S.myOrder = [...q.shown];
+  S.plan = {};
+  if (S.live && S.room) {
+    if (S.unsubAns) S.unsubAns();
+    const qi = S.qi;
+    S.unsubAns = NET.on(`${S.room}/answers/${qi}`, v => {
+      if (S.phase !== 'question' || S.qi !== qi) return;
+      for (const [id, a] of Object.entries(v || {})) {
+        if (S.answers[id] || !S.players.find(p => p.id === id)) continue;
+        const ok = q.type === 'order' ? Array.isArray(a.order) && a.order.length === q.items.length : Number.isInteger(a.choice) && a.choice >= 0 && a.choice < 4;
+        S.answers[id] = ok ? {...a, time:S.elapsed} : {choice:-1, order:[], time:S.elapsed};
+      }
+      updateLive();
+    });
+  }
+  S.players.filter(p => p.bot).forEach(b => {
+    const skip = Math.random() < .04;
+    const p = b.skill * (q.double ? .85 : 1) * (q.level === 'HL' ? .9 : 1);
+    let ans;
+    if (q.type === 'order') {
+      const o = [...q.items];
+      if (Math.random() > p) { const k = 1 + Math.floor(Math.random()*2); for (let j = 0; j < k; j++) { const i = Math.floor(Math.random()*(o.length-1)); [o[i],o[i+1]] = [o[i+1],o[i]]; } }
+      ans = {order:o};
+    } else {
+      ans = {choice: Math.random() < p ? q.correct : shuffle([0,1,2,3].filter(i => i !== q.correct))[0]};
+    }
+    const at = skip ? Infinity : Math.min(q.T - .3, q.T * (.18 + Math.random()*.6) * (1.25 - b.skill*.4));
+    S.plan[b.id] = {at, ans};
+  });
+  render();
+}
+
+function scoreFor(q, a){
+  if (!a) return {frac:0, pts:0};
+  const speed = 1 - .5 * Math.min(a.time, q.T) / q.T;
+  const frac = q.type === 'order' ? a.order.filter((t,i) => t === q.items[i]).length / q.items.length : (a.choice === q.correct ? 1 : 0);
+  return {frac, pts: frac > 0 ? Math.round(1000 * speed * frac * (q.double ? 2 : 1)) : 0};
+}
+
+function reveal(){
+  const q = cur(); const before = ranked();
+  S.players.forEach(p => { p.prevRank = before.indexOf(p) + 1; const r = scoreFor(q, S.answers[p.id]); S.results[p.id] = r; p.gain = r.pts; p.score += r.pts; });
+  S.played = S.qi + 1;
+  if (S.live && S.room) {
+    if (S.unsubAns) { S.unsubAns(); S.unsubAns = null; }
+    const sc = {}; S.players.forEach(p => sc[p.id] = {name:p.name, score:p.score, gain:p.gain, frac:S.results[p.id].frac, pts:S.results[p.id].pts});
+    NET.set(`${S.room}/scores`, sc).catch(() => {});
+  }
+  S.phase = 'reveal'; S.paused = false; render();
+}
+
+function hostPrimary(){
+  if (S.phase === 'setup') openLobby();
+  else if (S.phase === 'lobby' && S.players.length) startGame();
+  else if (S.phase === 'reveal') { if (S.qi === S.questions.length - 1) { S.phase = 'podium'; render(); } else { S.phase = 'leaderboard'; render(); } }
+  else if (S.phase === 'leaderboard') { S.qi++; getReady(); }
+}
+
+function answer(a){
+  if (S.phase !== 'question' || S.answers.you || S.paused) return;
+  if (ROLE === 'student') {
+    SS.answered = S.qi; SS.myAns = a; S.answers = {you:a}; renderStudent();
+    NET.set(`${SS.room}/answers/${S.qi}/${NET.uid}`, clean(a)).catch(() => {});
+    return;
+  }
+  S.answers.you = {...a, time:S.elapsed}; renderStudent(); updateLive();
+}
+
+function removePlayer(id){
+  if (S.live && S.room) NET.remove(`${S.room}/players/${id}`).catch(() => {});
+  S.players = S.players.filter(p => p.id !== id);
+  delete S.answers[id]; delete S.plan[id];
+  if (id === 'you') { S.you.joined = false; }
+  else if (S.phase === 'lobby') S.botTarget = Math.max(0, S.botTarget - 1);
+  render();
+}
+
+/* =========================================================
+   TICK (100 ms)
+   ========================================================= */
+function updateLive(){
+  const q = cur(); if (!q || S.phase !== 'question') return;
+  const left = Math.max(0, q.T - S.elapsed);
+  const bar = $('#ringBar'), lbl = $('#ringLbl');
+  if (bar) bar.style.strokeDashoffset = (326.7 * (1 - left / q.T)).toFixed(1);
+  if (lbl) { lbl.textContent = Math.ceil(left); $('#ring').classList.toggle('low', left <= 5); }
+  const st = $('#sTimer'); if (st) st.style.width = (left / q.T * 100) + '%';
+  const c = $('#ansCount'); if (c) c.textContent = Object.keys(S.answers).length;
+}
+
+setInterval(() => {
+  if (ROLE === 'student') { if (S.phase === 'question' && !S.paused && S.you.joined) { S.elapsed += .1; updateLive(); } return; }
+  if (S.paused) return;
+  if (S.phase === 'lobby') {
+    S.lobbyClock += .1;
+    const bots = S.players.filter(p => p.bot).length;
+    if (bots < S.botTarget && S.players.length < MAX_PLAYERS && S.lobbyClock >= S.nextBotAt) {
+      addBot(); S.nextBotAt = S.lobbyClock + .12 + Math.random()*.45; renderHost();
+      if (!S.you.joined && S.players.length >= MAX_PLAYERS) renderStudent();
+    }
+  } else if (S.phase === 'getready') {
+    S.elapsed += .1; if (S.elapsed >= 2.4) startQuestion();
+  } else if (S.phase === 'question') {
+    const q = cur(); S.elapsed += .1;
+    if (S.live && Math.floor(S.elapsed) !== Math.floor(S.elapsed - .1)) pushState();
+    for (const id in S.plan) if (!S.answers[id] && S.elapsed >= S.plan[id].at) S.answers[id] = {...S.plan[id].ans, time:S.elapsed};
+    updateLive();
+    const all = S.players.length && S.players.every(p => S.answers[p.id]);
+    if (all && S.doneAt === null) S.doneAt = S.elapsed;
+    if (S.elapsed >= q.T || (S.doneAt !== null && S.elapsed - S.doneAt >= .6)) reveal();
+  }
+}, 100);
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-concept]'); if (!t) return;
+  if (t.id === 'hostPrimary') return hostPrimary();
+  if (t.id === 'toggleStudent') { S.showStudent = !S.showStudent; $('#stage').classList.toggle('solo', !S.showStudent); t.textContent = S.showStudent ? 'Hide student view' : 'Show student view'; return; }
+  if (t.dataset.view) {
+    $('#stage').classList.toggle('show-student', t.dataset.view === 'student');
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('on', b === t));
+    updateTabs(); return;
+  }
+  if (t.dataset.mode) { S.settings.mode = t.dataset.mode; applyLayout(); return renderHost(); }
+  if (t.dataset.hl) { S.settings.hl = t.dataset.hl === '1'; return renderHost(); }
+  if (t.dataset.time) { S.settings.time = +t.dataset.time; return renderHost(); }
+  if (t.dataset.remove) return removePlayer(t.dataset.remove);
+  if (t.dataset.pick) return answer({choice:+t.dataset.pick});
+  if (t.dataset.mv) { const [i,d] = t.dataset.mv.split(':').map(Number); moveItem(i, i+d); return; }
+  const act = t.dataset.act;
+  if (act === 'pause') { S.paused = !S.paused; render(); updateLive(); }
+  if (act === 'skip') reveal();
+  if (act === 'end') { S.wasPaused = S.paused; S.paused = true; S.confirmEnd = true; render(); updateLive(); }
+  if (act === 'endCancel') { S.confirmEnd = false; S.paused = S.wasPaused; render(); updateLive(); }
+  if (act === 'endResults') { S.confirmEnd = false; S.paused = false; S.phase = 'podium'; render(); }
+  if (act === 'endSetup') { closeRoom(); S.confirmEnd = false; S.paused = false; S.phase = 'setup'; S.players = S.players.filter(p => p.id === 'you'); render(); }
+  if (act === 'back') { closeRoom(); S.netError = ''; S.phase = 'setup'; S.players = S.players.filter(p => p.id === 'you'); render(); }
+  if (act === 'retryLive') openLiveLobby();
+  if (act === 'joinLive') joinLive();
+  if (act === 'rejoin') { SS.ended = SS.removed = false; SS.joined = false; S.you.joined = false; renderStudent(); }
+  if (act === 'join') joinYou();
+  if (act === 'submitOrder') answer({order:[...S.myOrder]});
+  if (act === 'again') { S.phase = 'lobby'; S.botTarget = S.players.filter(p=>p.bot).length; startGame(); }
+  if (act === 'new') { closeRoom(); S.phase = 'setup'; S.players = S.players.filter(p => p.id === 'you'); render(); }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  const toggle = (ids, on) => ids.forEach(id => on ? S.settings.concepts.add(id) : S.settings.concepts.delete(id));
+  if (t.dataset.concept) toggle([t.dataset.concept], t.checked);
+  else if (t.dataset.sub) toggle(SYLLABUS.flatMap(u => u.subs).find(s => s.id === t.dataset.sub).concepts.map(c => c.id), t.checked);
+  else if (t.dataset.unit) toggle(SYLLABUS.find(u => u.id === t.dataset.unit).subs.flatMap(s => s.concepts.map(c => c.id)), t.checked);
+  else return;
+  renderHost();
+});
+
+document.addEventListener('input', e => {
+  const t = e.target; if (t.id !== 'rCount' && t.id !== 'rBots') return;
+  if (t.id === 'rCount') S.settings.count = +t.value; else S.settings.bots = +t.value;
+  t.style.setProperty('--p', ((t.value - t.min) / Math.max(1, t.max - t.min) * 100) + '%');
+  const span = t.parentElement.querySelector('label span');
+  if (t.id === 'rCount') span.textContent = `${t.value} of ${t.max} available`; else span.textContent = `${t.value} + you`;
+});
+document.addEventListener('change', e => { if (e.target.id === 'rCount' || e.target.id === 'rBots') renderHost(); });
+
+/* Join without a <form>: some embedded previews block form submission. */
+function joinYou(){
+  let name = $('#nick').value.trim().slice(0,15); if (!name) { $('#nick').focus(); return; }
+  if (S.players.length >= MAX_PLAYERS) return;
+  const used = new Set(S.players.map(p => p.name)); const base = name; let n = 2; while (used.has(name)) name = base.slice(0,13) + n++;
+  S.you = {joined:true, name}; S.players.push({id:'you', name, bot:false, score:0}); render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.id === 'nick' && e.key === 'Enter') { e.preventDefault(); joinYou(); return; }
+  if ((e.target.id === 'liveNick' || e.target.id === 'pinIn') && e.key === 'Enter') { e.preventDefault(); joinLive(); return; }
+  if (S.confirmEnd) { if (e.key === 'Escape') { S.confirmEnd = false; S.paused = S.wasPaused; render(); updateLive(); } if (e.code === 'Space') e.preventDefault(); return; }
+  const inInput = /INPUT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range';
+  if (inInput) return;
+  const item = document.activeElement.closest && document.activeElement.closest('.sitem');
+  if (item && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault(); const i = +item.dataset.i; moveItem(i, i + (e.key === 'ArrowUp' ? -1 : 1), true); return;
+  }
+  if (S.phase === 'question' && /^[1-4]$/.test(e.key)) { const q = cur(); if (q.type !== 'order') answer({choice:+e.key - 1}); return; }
+  if (e.code === 'Space' && !item) { e.preventDefault(); const b = $('#hostPrimary'); if (b && !b.disabled) hostPrimary(); }
+});
+
+function moveItem(i, j, refocus){
+  if (j < 0 || j >= S.myOrder.length) return;
+  const [x] = S.myOrder.splice(i, 1); S.myOrder.splice(j, 0, x); renderStudent();
+  if (refocus) { const el = document.querySelector(`.sitem[data-i="${j}"]`); el && el.focus(); }
+}
+
+/* =========================================================
+   STUDENT — joining and following a live game
+   ========================================================= */
+function studentLiveView(){
+  const logo = `<div class="s-logo">${ICON.logo}</div>`;
+  if (SS.removed) return `<div class="s-center">${logo}<h2>You were removed from the game</h2><div class="muted">Your teacher removed you. You can join again with a different nickname.</div>
+    <button class="btn" data-act="rejoin">Join a game</button></div>`;
+  if (SS.ended) return `<div class="s-center">${logo}<h2>The game has ended</h2><div class="muted">Thanks for playing!</div><button class="btn" data-act="rejoin">Join another game</button></div>`;
+  if (!SS.joined) {
+    if (!liveAvailable()) return `<div class="s-center">${logo}<h2>EconRules Live</h2><div class="muted">Live games aren’t set up on this copy yet.</div>
+      <a class="host-link" href="${esc(hostUrl())}">Teacher? Host a game →</a></div>`;
+    return `<div class="s-center">${logo}<h2>Join a game</h2>
+      <div class="join-form">
+        <input class="input pin-input" id="pinIn" inputmode="numeric" maxlength="7" placeholder="Game PIN" autocomplete="off" value="${esc(SS.pin)}">
+        <input class="input" id="liveNick" maxlength="15" placeholder="Nickname" autocomplete="off" value="${esc(S.you.name)}">
+        <button class="btn wide" data-act="joinLive" ${SS.busy ? 'disabled' : ''}>${SS.busy ? 'Joining…' : 'Join'}</button>
+        ${SS.err ? `<div class="join-err">${esc(SS.err)}</div>` : ''}
+      </div>
+      <a class="host-link" href="${esc(hostUrl())}">Teacher? Host a game →</a></div>`;
+  }
+  return sView();
+}
+async function joinLive(){
+  const pin = ($('#pinIn').value || '').replace(/\D/g, ''); let name = $('#liveNick').value.trim().slice(0, 15);
+  SS.pin = pin; S.you.name = name; SS.err = '';
+  if (pin.length !== 6) { SS.err = 'Enter the 6-digit game PIN from the big screen.'; return renderStudent(); }
+  if (!name) { SS.err = 'Choose a nickname.'; return renderStudent(); }
+  SS.busy = true; renderStudent();
+  try {
+    const net = await getNet(); const room = `rooms/${pin}`;
+    const st = await net.get(`${room}/state`);
+    if (!st) throw {friendly:'No game found with that PIN. Check the PIN on the big screen.'};
+    if (st.phase !== 'lobby') throw {friendly:'That game has already started. Ask your teacher about the next one.'};
+    const players = (await net.get(`${room}/players`)) || {};
+    if (Object.keys(players).length >= MAX_PLAYERS) throw {friendly:'This game is full (25 players).'};
+    const used = new Set(Object.values(players).map(p => p.name)); const base = name; let n = 2;
+    while (used.has(name)) name = base.slice(0, 13) + n++;
+    await net.set(`${room}/players/${net.uid}`, {name, joinedAt:Date.now()});
+    Object.assign(SS, {joined:true, room, ended:false, removed:false, scores:{}, answered:-1});
+    S.you = {joined:true, name}; S.players = [{id:'you', name, score:0}]; S.phase = 'lobby';
+    SS.unsubs = [
+      net.on(`${room}/state`, onStudentState),
+      net.on(`${room}/scores`, onStudentScores),
+      net.on(`${room}/players/${net.uid}`, v => { if (SS.joined && v === null && !SS.ended) { SS.removed = true; leaveLive(); renderStudent(); } }),
+    ];
+  } catch (err) { SS.err = err.friendly || friendlyNetError(err); }
+  SS.busy = false; renderStudent();
+}
+function leaveLive(){ SS.unsubs.forEach(u => u()); SS.unsubs = []; SS.joined = false; S.you.joined = false; }
+let studentKey = '';
+function onStudentState(st){
+  if (!st) { if (SS.joined) { SS.ended = true; leaveLive(); renderStudent(); } return; }
+  S.phase = st.phase; S.qi = st.qi || 0;
+  S.questions = new Array(st.total || 0); if (st.q) S.questions[S.qi] = st.q;
+  S.answers = SS.answered === S.qi ? {you:SS.myAns} : {};
+  const key = `${st.phase}:${S.qi}:${!!st.paused}:${!!(st.q && st.q.exp)}`;
+  if (st.phase === 'question' && st.q) {
+    if (!studentKey.startsWith(`question:${S.qi}:`) && st.q.type === 'order') S.myOrder = [...st.q.shown];
+    S.elapsed = st.q.T - (st.left == null ? st.q.T : st.left);
+  }
+  S.paused = !!st.paused;
+  syncStudentResults();
+  if (key !== studentKey) { studentKey = key; renderStudent(); } else updateLive();
+}
+function syncStudentResults(){
+  const me = SS.scores[NET.uid];
+  S.results = me ? {you:{frac:me.frac || 0, pts:me.pts || 0}} : {};
+  const list = Object.entries(SS.scores).map(([id, p]) => ({id: id === NET.uid ? 'you' : id, name:p.name, score:p.score || 0, gain:p.gain || 0}));
+  S.players = list.length ? list : [{id:'you', name:S.you.name, score:0}];
+  if (!S.players.find(p => p.id === 'you')) S.players.push({id:'you', name:S.you.name, score:0});
+}
+function onStudentScores(sc){
+  SS.scores = sc || {}; syncStudentResults();
+  if (['reveal','leaderboard','podium'].includes(S.phase)) renderStudent();
+}
+
+/* drag-and-drop for ordering */
+let dragFrom = null;
+document.addEventListener('dragstart', e => { const it = e.target.closest('.sitem'); if (!it) return; dragFrom = +it.dataset.i; it.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', ''); });
+document.addEventListener('dragover', e => { const it = e.target.closest('.sitem'); if (!it || dragFrom === null) return; e.preventDefault(); document.querySelectorAll('.sitem.over').forEach(x => x.classList.remove('over')); it.classList.add('over'); });
+document.addEventListener('drop', e => { const it = e.target.closest('.sitem'); if (!it || dragFrom === null) return; e.preventDefault(); const to = +it.dataset.i; const f = dragFrom; dragFrom = null; moveItem(f, to); });
+document.addEventListener('dragend', () => { dragFrom = null; document.querySelectorAll('.sitem').forEach(x => x.classList.remove('over','dragging')); });
+
+window.addEventListener('pagehide', () => { if (ROLE === 'host') closeRoom(); });
+S.settings.mode = liveAvailable() ? 'live' : 'practice';
+applyLayout();
+render();
+</script>
+</body>
+</html>
