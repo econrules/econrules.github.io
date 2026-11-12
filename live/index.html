@@ -56,6 +56,31 @@ input{font:inherit;color:inherit}
 .btn-ghost{font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);transition:.2s}
 .btn-ghost:hover{background:var(--panel2);border-color:rgba(255,255,255,.28)}
 
+/* ---------- music ---------- */
+.mus{position:relative}
+.mus-btn{display:inline-flex;align-items:center;gap:8px}
+.mus-btn svg{width:16px;height:16px}
+.mus-btn.on{border-color:rgba(58,214,255,.45);background:rgba(58,214,255,.1);color:#bdefff}
+.mus-bars{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+.mus-bars i{width:3px;background:var(--cyan);border-radius:2px;height:4px}
+.mus-btn.on .mus-bars i{animation:mbar 1s ease-in-out infinite}
+.mus-btn.on .mus-bars i:nth-child(2){animation-delay:-.4s}.mus-btn.on .mus-bars i:nth-child(3){animation-delay:-.7s}
+@keyframes mbar{0%,100%{height:4px}50%{height:12px}}
+.mus-pop{position:absolute;right:0;top:calc(100% + 10px);width:270px;padding:16px;border-radius:16px;border:1px solid var(--line2);
+  background:rgba(12,18,38,.97);backdrop-filter:blur(14px);box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;z-index:40}
+.mus.open .mus-pop{display:block}
+.mus-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;font-weight:600;font-size:14px}
+.mus-sw{width:44px;height:24px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:.2s;flex:none}
+.mus-sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+.mus-sw.on{background:linear-gradient(135deg,var(--blue),var(--cyan))}.mus-sw.on::after{left:23px}
+.mus-vol{display:flex;align-items:center;gap:10px;margin-bottom:14px;color:var(--muted);font-size:12px}
+.mus-vol input{flex:1;accent-color:var(--cyan)}
+.mus-tracks{display:grid;gap:6px}
+.mus-tracks button{text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;color:var(--muted)}
+.mus-tracks button.on{color:var(--text);border-color:rgba(58,214,255,.45);background:rgba(58,214,255,.1)}
+.mus-tracks button:hover{background:var(--panel2)}
+.mus-note{margin-top:10px;font-size:11.5px;color:var(--dim)}
+
 /* ---------- stage ---------- */
 .stage{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;padding:22px 24px 10px}
 .stage.solo{grid-template-columns:minmax(0,1fr)}
@@ -431,6 +456,15 @@ body.student-mode .sv{padding:28px 24px}
       EconRules <span class="live">LIVE</span>
     </div>
     <div class="spacer"></div>
+    <div class="mus" id="mus" style="display:none">
+      <button class="btn-ghost mus-btn" id="musBtn" aria-label="Background music"><span class="mus-bars"><i></i><i></i><i></i></span>Music</button>
+      <div class="mus-pop" id="musPop">
+        <div class="mus-row">Background music<button class="mus-sw" id="musSw" aria-label="Music on or off"></button></div>
+        <div class="mus-vol"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/></svg><input type="range" id="musVol" min="0" max="100" aria-label="Volume"><span id="musVolN"></span></div>
+        <div class="mus-tracks" id="musTracks"></div>
+        <div class="mus-note">Plays on this screen only. Tracks loop one after another.</div>
+      </div>
+    </div>
     <div class="pill" id="modePill">Practice mode · <b>bots</b> fill the room</div>
     <div class="seg view-tabs" id="viewTabs"><button data-view="host" class="on">Host screen</button><button data-view="student">Student<i class="nd"></i></button></div>
     <button class="btn-ghost" id="toggleStudent">Hide student view</button>
@@ -1815,6 +1849,52 @@ function svgDiagram(key, mini=false){
 }
 
 /* =========================================================
+   BACKGROUND MUSIC (host screen only)
+   ========================================================= */
+const TRACKS = [
+  {file:'music/lobby-pulse-80s.m4a', name:'Lobby Pulse 80s'},
+  {file:'music/deep-house-reggae.m4a', name:'Deep House Reggae'},
+  {file:'music/new-wave.m4a', name:'New Wave'},
+];
+const MUS = (() => { let m = {on:false, vol:35, track:0, shuffle:false};
+  try { Object.assign(m, JSON.parse(localStorage.getItem('erl-music') || '{}')); } catch (e) {}
+  m.on = false; return m; })();
+let musAudio = null;
+function musSave(){ try { localStorage.setItem('erl-music', JSON.stringify({vol:MUS.vol, track:MUS.track, shuffle:MUS.shuffle})); } catch (e) {} }
+function musNext(){ MUS.track = MUS.shuffle ? (MUS.track + 1 + Math.floor(Math.random() * (TRACKS.length - 1))) % TRACKS.length : (MUS.track + 1) % TRACKS.length; musLoad(); }
+function musLoad(){
+  if (!musAudio) { musAudio = new Audio(); musAudio.preload = 'auto'; musAudio.addEventListener('ended', musNext); }
+  musAudio.src = TRACKS[MUS.track].file; musAudio.volume = MUS.vol / 100;
+  if (MUS.on) musAudio.play().catch(() => { MUS.on = false; musRender(); });
+  musSave(); musRender();
+}
+function musToggle(on){
+  MUS.on = on;
+  if (on) { if (!musAudio || !musAudio.src) musLoad(); else musAudio.play().catch(() => { MUS.on = false; musRender(); }); }
+  else if (musAudio) musAudio.pause();
+  musRender();
+}
+function musRender(){
+  $('#musBtn').classList.toggle('on', MUS.on); $('#musSw').classList.toggle('on', MUS.on);
+  $('#musVol').value = MUS.vol; $('#musVolN').textContent = MUS.vol;
+  $('#musTracks').innerHTML = TRACKS.map((t,i) => `<button data-track="${i}" class="${!MUS.shuffle && i===MUS.track?'on':''}">${MUS.on && i===MUS.track ? '♪ ' : ''}${t.name}</button>`).join('')
+    + `<button data-track="shuffle" class="${MUS.shuffle?'on':''}">Shuffle all</button>`;
+}
+function musInit(){
+  if (ROLE !== 'host') return;
+  $('#mus').style.display = '';
+  $('#musBtn').onclick = e => { e.stopPropagation(); $('#mus').classList.toggle('open'); };
+  $('#musPop').onclick = e => e.stopPropagation();
+  document.addEventListener('click', () => $('#mus').classList.remove('open'));
+  $('#musSw').onclick = () => musToggle(!MUS.on);
+  $('#musVol').oninput = e => { MUS.vol = +e.target.value; if (musAudio) musAudio.volume = MUS.vol / 100; $('#musVolN').textContent = MUS.vol; musSave(); };
+  $('#musTracks').onclick = e => { const b = e.target.closest('[data-track]'); if (!b) return;
+    if (b.dataset.track === 'shuffle') { MUS.shuffle = !MUS.shuffle; musSave(); musRender(); return; }
+    MUS.shuffle = false; MUS.track = +b.dataset.track; MUS.on = true; musLoad(); };
+  musRender();
+}
+
+/* =========================================================
    STATE
    ========================================================= */
 const MAX_PLAYERS = 25;
@@ -1835,7 +1915,7 @@ const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, re
    ========================================================= */
 /* ---------- Automatic updates ----------
    APP_VERSION must match live/version.json; bump both every time the game is published. */
-const APP_VERSION = '2026-11-12d';
+const APP_VERSION = '2026-11-12e';
 let NEW_VERSION = null;
 async function checkVersion(){
   if (location.protocol === 'file:') return;
@@ -2648,6 +2728,7 @@ window.addEventListener('pagehide', () => { if (ROLE === 'host') closeRoom(); })
 S.settings.mode = liveAvailable() ? 'live' : 'practice';
 applyLayout();
 render();
+musInit();
 checkVersion(); setInterval(checkVersion, 5 * 60 * 1000);
 </script>
 </body>
