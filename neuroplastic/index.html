@@ -3299,8 +3299,10 @@ function openProfile() {
     ${needCode ? `<div class="field"><label for="pCode">Class code from your teacher</label><input id="pCode" maxlength="20" autocomplete="off" value="${esc(profile?.code || "")}"></div>` : ""}
     <p class="err" id="pErr"></p>
     <div class="row"><button type="button" class="linkbtn" id="pSkip">${profile ? "Cancel" : "Just looking"}</button><button class="btn" type="button" id="pSave">Save</button></div>
+    <p style="border-top:1px dashed var(--line);padding-top:12px;font-size:14px" class="muted">Played on another device or in Claude? <button type="button" class="linkbtn" id="pMove" style="color:var(--axon)">Move my progress</button></p>
   </div></div>`;
   $("#pName").focus();
+  $("#pMove").addEventListener("click", openTransfer);
   $("#pSkip").addEventListener("click", () => { root.innerHTML = ""; maybeGuide(); });
   $("#pForm").querySelectorAll("input").forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); saveProfile(); } }));
   $("#pSave").addEventListener("click", saveProfile);
@@ -3318,6 +3320,64 @@ function openProfile() {
     profile = { name, cls, code }; store.set("profile", profile);
     root.innerHTML = ""; renderHeader(); maybeGuide();
   }
+}
+
+/* ---------------- move progress between devices ----------------
+   Progress lives in this browser only (localStorage). A save code packs it
+   into text a student can copy here and paste into the game somewhere else,
+   e.g. from the old Claude version into econrules.github.io/neuroplastic. */
+const SAVE_KEYS = ["profile", "progress", "seenQ", "seenGuide", "cycleReflect", "muted"];
+function makeSaveCode() {
+  const data = {};
+  SAVE_KEYS.forEach(k => { try { const v = localStorage.getItem("np1:" + k); if (v != null) data[k] = v; } catch (e) {} });
+  const bytes = new TextEncoder().encode(JSON.stringify({ v: 1, data }));
+  let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b));
+  return "NP1-" + btoa(bin);
+}
+function readSaveCode(code) {
+  code = String(code).replace(/\s+/g, "");
+  if (!code.startsWith("NP1-")) throw new Error("bad");
+  const bin = atob(code.slice(4));
+  const obj = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+  if (!obj || obj.v !== 1 || typeof obj.data !== "object") throw new Error("bad");
+  const out = {};
+  SAVE_KEYS.forEach(k => { if (typeof obj.data[k] === "string") { JSON.parse(obj.data[k]); out[k] = obj.data[k]; } });
+  if (!out.progress && !out.profile) throw new Error("empty");
+  return out;
+}
+function openTransfer() {
+  const root = $("#modalRoot");
+  const code = makeSaveCode();
+  const p = progress || {};
+  const cards = Object.keys(p.studies || {}).length;
+  root.innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tTitle"><div class="modal" style="width:min(520px,100%)">
+    <h2 id="tTitle">Move my progress</h2>
+    <div class="field"><label for="tOut"><b style="color:var(--text)">1. Take it with you.</b> Copy this save code. It holds your name, level, cards and answers on this device (${cards} study card${cards === 1 ? "" : "s"} started, ${p.rounds || 0} round${p.rounds === 1 ? "" : "s"} played).</label>
+      <textarea id="tOut" readonly rows="3" style="background:var(--ink);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px var(--font-mono);word-break:break-all;resize:vertical">${esc(code)}</textarea>
+      <div class="row"><span class="muted" style="font-size:13px" id="tCopied"></span><button type="button" class="btn ghost" id="tCopy">Copy code</button></div></div>
+    <div class="field" style="border-top:1px dashed var(--line);padding-top:12px"><label for="tIn"><b style="color:var(--text)">2. Bring it here.</b> Paste a save code from the other device. This replaces the progress on this device.</label>
+      <textarea id="tIn" rows="3" placeholder="NP1-…" style="background:var(--ink);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px var(--font-mono);word-break:break-all;resize:vertical"></textarea></div>
+    <p class="err" id="tErr"></p>
+    <div class="row"><button type="button" class="linkbtn" id="tClose">Close</button><button class="btn" type="button" id="tLoad">Load progress</button></div>
+  </div></div>`;
+  $("#tOut").addEventListener("focus", e => e.target.select());
+  $("#tCopy").addEventListener("click", async () => {
+    const box = $("#tOut"); box.focus(); box.select();
+    let ok = false;
+    try { await navigator.clipboard.writeText(code); ok = true; } catch (e) { try { ok = document.execCommand("copy"); } catch (e2) {} }
+    $("#tCopied").textContent = ok ? "Copied. Now paste it into the other game." : "Code selected. Press Ctrl+C (or ⌘+C) to copy.";
+  });
+  $("#tClose").addEventListener("click", () => { root.innerHTML = ""; });
+  $("#tLoad").addEventListener("click", () => {
+    let data;
+    try { data = readSaveCode($("#tIn").value); }
+    catch (e) { $("#tErr").textContent = "That doesn't look like a full save code. Copy the whole code, starting NP1-, and try again."; return; }
+    try {
+      SAVE_KEYS.forEach(k => localStorage.removeItem("np1:" + k));
+      Object.entries(data).forEach(([k, v]) => localStorage.setItem("np1:" + k, v));
+    } catch (e) { $("#tErr").textContent = "This browser won't let the game save. Try another browser."; return; }
+    location.reload();
+  });
 }
 
 /* ---------------- boot ---------------- */
