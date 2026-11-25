@@ -728,7 +728,62 @@ const Q = [
   { s: "pr", t: "tot", q: "The three sororities were chosen because they were very different from one another.", a: false, ex: "Twisted. They were chosen because they were similar in proximity and values." },
   { s: "bm", t: "detail", q: "Which names were used as Black-sounding names in the résumé study?", o: ["Lakisha and Jamal", "Emily and Greg", "Maria and José", "Mei and Wei"], a: "Lakisha and Jamal", ex: "Lakisha and Jamal; Emily and Greg were the white-sounding names." },
   { s: "bm", t: "tot", q: "A higher-quality résumé boosted callbacks much more for white-sounding names than for Black-sounding names.", a: true, ex: "True. Even improving qualifications helped Black applicants less." },
-  { s: "phelps", t: "tot", q: "Participants with stronger implicit bias were faster at pairing White with good and Black with bad.", a: true, ex: "True. That's how the IAT measures implicit bias: through reaction times." }
+  { s: "phelps", t: "tot", q: "Participants with stronger implicit bias were faster at pairing White with good and Black with bad.", a: true, ex: "True. That's how the IAT measures implicit bias: through reaction times." },
+  // ---- practice top-up (Nov 2026): marginalization links + thinner studies
+  { s: "bh", t: "which", q: "Working-class women with young children at home were four times more likely to become depressed than middle-class women with children.", ex: "This is Brown & Harris (1978)." },
+  { s: "bh", t: "detail", q: "Which women in Brown & Harris were most at risk of depression?", o: ["Working-class women with young children at home", "Middle-class women with no children", "Women with a close confidant", "Women who had just started a new job"], a: "Working-class women with young children at home", ex: "Working-class women with young children were four times more likely to become depressed than middle-class women with children." },
+  { s: "bh", t: "detail", q: "How does Brown & Harris link marginalization to mental health?", o: ["Lower-class women faced more risk factors and had fewer protective factors", "Depression was equally common in every social class", "Only wealthy women became depressed", "Social class was not measured"], a: "Lower-class women faced more risk factors and had fewer protective factors", ex: "Living in poverty brings more stress and fewer protective factors, so depression becomes more likely. This is how classism and poverty can affect mental health." },
+  { s: "bh", t: "detail", q: "Brown & Harris is evidence that marginalization can affect mental health through…", o: ["Social factors such as class, life events and support", "Higher amygdala activity", "Out-group homogeneity", "A smaller hippocampus"], a: "Social factors such as class, life events and support", ex: "Brown & Harris is a socio-cultural study: class, stressful life events and support explained who became depressed." },
+  { s: "bh", t: "detail", q: "Which of these is a protective factor in the vulnerability model?", o: ["A close, confiding relationship", "Three or more young children at home", "Unemployment", "Losing your mother before age 11"], a: "A close, confiding relationship", ex: "A confidant protects against depression. The other three are vulnerability (risk) factors." },
+  { s: "bh", t: "detail", q: "Why should we be careful about generalising Brown & Harris to everyone?", o: ["The sample was only women from South London", "The sample was only men", "The sample was only teenagers", "The sample was only wealthy families"], a: "The sample was only women from South London", ex: "All 458 participants were women from one city, so the results may not apply to men or to other cultures." },
+  { s: "bh", t: "tot", q: "Brown & Harris suggests poverty can be a risk factor for depression because it brings more stress and fewer protective factors.", a: true, ex: "True. That is the vulnerability model applied to marginalization." },
+  { s: "bh", t: "tot", q: "Brown & Harris shows that depression comes only from what goes on inside a person's head.", a: false, ex: "Twisted. Brown & Harris points to social factors: class, stressful life events and a lack of support." },
+  { s: "bh", t: "apr", q: "Women without a close confidant were more vulnerable to depression after a severe life event.", a: "Result", ex: "This is a result of Brown & Harris." },
+  { s: "bh", t: "evidence", q: "How can social class influence a person's risk of depression?", ex: "Brown & Harris found working-class women with young children were four times more likely to become depressed: more risk factors, fewer protective ones." },
+
+  { s: "garrison", t: "which", q: "Black and Hispanic teenagers showed higher levels of PTSD than white teenagers after Hurricane Andrew.", ex: "This is Garrison (1995)." },
+  { s: "garrison", t: "detail", q: "Why might marginalized families find the aftermath of a disaster more stressful?", o: ["They often have fewer resources, like insurance and savings, to rebuild", "Their homes are always less damaged", "They experience the disaster for less time", "They have more protective factors"], a: "They often have fewer resources, like insurance and savings, to rebuild", ex: "Fewer resources make the aftermath harder, which leads to more negative appraisals and more PTSD." },
+  { s: "garrison", t: "apr", q: "Teenagers were interviewed six months after the hurricane.", a: "Procedure", ex: "This is part of Garrison's procedure." },
+
+  { s: "jetten", t: "which", q: "Strong identifiers in a low-status group felt resentment when their position seemed unfair, and were more willing to take collective action.", ex: "This is Jetten et al. (2001)." },
+  { s: "jetten", t: "detail", q: "Which group-based emotion did strong identifiers in high-status groups tend to feel?", o: ["Pride", "Resentment", "Frustration", "Helplessness"], a: "Pride", ex: "High-status strong identifiers felt pride and tended to justify the inequality." },
+  { s: "jetten", t: "detail", q: "Which emotions did low-status members feel when their status seemed unfair?", o: ["Resentment and frustration", "Pride and satisfaction", "Guilt and shame", "No emotions at all"], a: "Resentment and frustration", ex: "Seeing their lower status as unfair led to resentment and frustration." },
+  { s: "jetten", t: "detail", q: "According to Jetten et al., what makes a marginalized group more likely to challenge inequality?", o: ["Seeing their lower status as unfair (illegitimate)", "Being placed in a high-status group", "Feeling proud of their position", "Having fewer group members"], a: "Seeing their lower status as unfair (illegitimate)", ex: "When low status seemed legitimate, people accepted it. When it seemed unfair, they were more ready for collective action." },
+  { s: "jetten", t: "tot", q: "Participants in Jetten et al. were grouped by their real family income.", a: false, ex: "Twisted. They were randomly assigned to high-status or low-status groups." },
+  { s: "jetten", t: "apr", q: "The researchers made some groups' status seem fair and other groups' status seem unfair.", a: "Procedure", ex: "This is part of the procedure: status was made to seem legitimate or illegitimate." },
+
+  { s: "bb", t: "detail", q: "\"Poor people are poor because they don't work hard enough\" is an example of a ___ explanation of poverty.", o: ["Individualistic", "Structural (systemic)", "Biological", "Cognitive appraisal"], a: "Individualistic", ex: "Individualistic explanations blame personal failings. Structural explanations point to systems." },
+  { s: "bb", t: "detail", q: "Apart from people from lower SES backgrounds, who else was more likely to see systemic causes of poverty?", o: ["People who identified with more egalitarian groups", "People who identified with higher-status groups", "Sorority members", "People with high amygdala activity"], a: "People who identified with more egalitarian groups", ex: "People in more egalitarian groups were also more likely to recognise systemic causes." },
+  { s: "bb", t: "detail", q: "How can blaming the poor keep marginalized groups in poverty?", o: ["It lowers support for systemic solutions, like better access to education", "It increases funding for people in poverty", "It removes stereotypes about the poor", "It has no effect on anyone"], a: "It lowers support for systemic solutions, like better access to education", ex: "If poverty is seen as a personal failing, there is less pressure to fix the systems that cause it." },
+  { s: "bb", t: "detail", q: "Which SIT idea explains why higher-status people protect their group's image?", o: ["Positive distinctiveness", "Out-group homogeneity", "Cognitive appraisal", "Neuroplasticity"], a: "Positive distinctiveness", ex: "Seeing your group as better than others boosts self-esteem, so higher-status people may blame the poor rather than the system." },
+  { s: "bb", t: "detail", q: "Prejudice against people because of their economic class is called…", o: ["Classism", "Ageism", "Xenophobia", "Ableism"], a: "Classism", ex: "Classism. Bourgeois & Bowen shows how classist beliefs about poverty can be kept going by social identity." },
+  { s: "bb", t: "tot", q: "Bourgeois & Bowen randomly assigned people to high-status and low-status groups.", a: false, ex: "Twisted. That was Jetten et al. Bourgeois & Bowen surveyed people from real high and low socio-economic backgrounds." },
+  { s: "bb", t: "tot", q: "Blaming poverty on laziness can reinforce stereotypes about people living in poverty.", a: true, ex: "True. This is how social identity can help keep marginalized groups in poverty." },
+  { s: "bb", t: "apr", q: "Higher-status identifiers mostly blamed poverty on personal failings.", a: "Result", ex: "This is a result of Bourgeois & Bowen." },
+
+  { s: "pr", t: "detail", q: "Out-group homogeneity is an example of a…", o: ["Cognitive bias", "Protective factor", "Provoking agent", "Neurotransmitter"], a: "Cognitive bias", ex: "A cognitive bias is a mental shortcut that can lead to quick, unfair judgments." },
+  { s: "pr", t: "detail", q: "How can out-group homogeneity contribute to marginalization?", o: ["Seeing a group as all alike makes stereotypes easier to form and apply", "It makes people see out-groups as more diverse", "It only affects how people see their own group", "It increases empathy for out-groups"], a: "Seeing a group as all alike makes stereotypes easier to form and apply", ex: "If \"they are all alike\", one stereotype can be applied to everyone in the group." },
+  { s: "pr", t: "detail", q: "Treating a whole marginalized community as if everyone in it is the same is treating it as a…", o: ["Monolith", "Schema", "Confidant", "Callback"], a: "Monolith", ex: "Out-group homogeneity helps explain why communities get treated as a monolith." },
+  { s: "pr", t: "tot", q: "Park & Rothbart found that people see their in-group as more varied than out-groups.", a: true, ex: "True. \"They are all alike; we are diverse.\"" },
+  { s: "pr", t: "tot", q: "Park & Rothbart suggests out-group homogeneity goes together with in-group favoritism.", a: true, ex: "True. Members rated their own sorority higher on favourable traits and saw the others as all alike." },
+  { s: "pr", t: "apr", q: "Members of each sorority rated their own and the other sororities on a 7-point scale.", a: "Procedure", ex: "This is the procedure." },
+
+  { s: "bm", t: "which", q: "Fictitious applicants called Lakisha, Jamal, Emily and Greg applied for real jobs in Chicago and Boston.", ex: "This is Bertrand & Mullainathan (2004)." },
+  { s: "bm", t: "detail", q: "Which names were used as white-sounding names in the résumé study?", o: ["Emily and Greg", "Lakisha and Jamal", "Maria and José", "Mei and Wei"], a: "Emily and Greg", ex: "Emily and Greg; Lakisha and Jamal were the Black-sounding names." },
+  { s: "bm", t: "detail", q: "Why were the résumés identical apart from the names?", o: ["So any difference in callbacks could only be due to the name", "To save the researchers time", "Because employers asked for it", "To test which qualifications employers liked"], a: "So any difference in callbacks could only be due to the name", ex: "Keeping everything else the same means the name is the only thing that could explain the gap." },
+  { s: "bm", t: "detail", q: "Why does the résumé study matter for marginalization?", o: ["Fewer callbacks mean fewer jobs and less income, feeding the cycle of poverty", "It shows that qualifications don't matter to anyone", "It shows hiring is always fair", "It measured brain activity during hiring"], a: "Fewer callbacks mean fewer jobs and less income, feeding the cycle of poverty", ex: "Discrimination in hiring can push marginalized groups into economic disadvantage." },
+  { s: "bm", t: "tot", q: "The résumé study took place in a laboratory with student participants.", a: false, ex: "Twisted. It was a field experiment using real job adverts." },
+  { s: "bm", t: "tot", q: "The résumé study is used as evidence that implicit bias can lead to economic marginalization.", a: true, ex: "True. Fewer callbacks mean fewer jobs and less income." },
+  { s: "bm", t: "apr", q: "Résumés with white-sounding names received 50% more callbacks.", a: "Result", ex: "This is the key result." },
+
+  { s: "phelps", t: "detail", q: "What did participants look at while in the scanner?", o: ["Photos of Black and white faces", "Job résumés", "Statements about poverty", "Videos of a hurricane"], a: "Photos of Black and white faces", ex: "White participants viewed Black and white faces during fMRI." },
+  { s: "phelps", t: "detail", q: "Who were the participants in Phelps et al. (2000)?", o: ["White participants", "Black and Hispanic teenagers", "Women from South London", "Sorority members"], a: "White participants", ex: "White participants viewed Black and white faces." },
+  { s: "phelps", t: "detail", q: "Why can't Phelps et al. show that the amygdala causes bias?", o: ["It found a correlation, not cause and effect", "No brain scans were used", "There was no measure of bias", "Participants were told the aim"], a: "It found a correlation, not cause and effect", ex: "A correlation shows two things go together, not that one causes the other." },
+  { s: "phelps", t: "detail", q: "The amygdala triggers which response to danger?", o: ["Fight-or-flight", "Synaptic pruning", "Neurogenesis", "Social comparison"], a: "Fight-or-flight", ex: "The amygdala is the threat centre that triggers fight-or-flight." },
+  { s: "phelps", t: "tot", q: "Phelps et al. measured implicit bias by asking people directly about their attitudes.", a: false, ex: "Twisted. They used a race IAT, which measures reaction times, so people can't easily hide their associations." },
+  { s: "phelps", t: "tot", q: "Phelps et al. suggests bias can work automatically, so people may treat marginalized groups unfairly without meaning to.", a: true, ex: "True. Implicit bias is unconscious, and Phelps links it to an automatic threat response." },
+  { s: "phelps", t: "apr", q: "Participants completed a race IAT, then viewed faces while their brain activity was scanned.", a: "Procedure", ex: "This is the procedure." },
+  { s: "phelps", t: "evidence", q: "Is implicit bias linked to activity in the brain?", ex: "Phelps et al. found stronger implicit bias went with more amygdala activation." }
 ];
 
 const TYPE_LABEL = { which: "Which study?", detail: "Detail check", tot: "True or twisted?", apr: "Aim, procedure or result?", evidence: "Best evidence" };
@@ -2369,6 +2424,8 @@ const TERMS = [
   { n: 6, t: "Positive appraisal", d: "Seeing a situation as a manageable challenge, leading to hope or motivation." },
   { n: 6, t: "Negative appraisal", d: "Seeing a situation as a threat or overwhelming, leading to fear or helplessness." },
   { n: 6, t: "Structured interview", d: "An interview in which every participant is asked the same questions." },
+  { n: 6, t: "Flashback", d: "Reliving a traumatic event as if it were happening again; a common symptom of PTSD." },
+  { n: 6, t: "Economic resources", d: "Money, insurance, savings and secure housing that help people recover after a disaster." },
   // Topic 7
   { n: 7, t: "Social identity", d: "A person's sense of who they are, based on the groups they belong to." },
   { n: 7, t: "Social group", d: "Two or more people who interact, share characteristics and feel a sense of unity." },
@@ -2387,12 +2444,16 @@ const TERMS = [
   { n: 8, t: "Cognitive bias", d: "A mental shortcut that can lead to quick judgments that aren't fair or logical." },
   { n: 8, t: "Out-group homogeneity", d: "Seeing out-group members as all alike: \"they are alike; we are diverse\"." },
   { n: 8, t: "In-group favoritism", d: "Favouring, trusting and cooperating more with people in your own group." },
+  { n: 8, t: "Sorority", d: "A social club for women students at a US university. Park & Rothbart studied three." },
   // Topic 9
   { n: 9, t: "Implicit bias", d: "Unconscious attitudes and stereotypes that affect our judgments without our awareness." },
   { n: 9, t: "IAT", d: "Implicit Association Test: measures how quickly people pair concepts to reveal hidden associations." },
   { n: 9, t: "Fight-or-flight response", d: "The body's reaction to danger, triggered by the amygdala." },
   { n: 9, t: "Callback", d: "A request for a job applicant to continue to the next stage of hiring." },
-  { n: 9, t: "Correlation", d: "A relationship between two variables. It does not prove that one causes the other." }
+  { n: 9, t: "Correlation", d: "A relationship between two variables. It does not prove that one causes the other." },
+  { n: 9, t: "Field experiment", d: "An experiment carried out in a real-world setting, such as replying to real job adverts." },
+  { n: 9, t: "fMRI", d: "A brain scan that shows which areas are active by tracking blood flow." },
+  { n: 9, t: "Reaction time", d: "How long someone takes to respond. The IAT uses it to reveal hidden associations." }
 ];
 
 const MODES = [
