@@ -2335,6 +2335,84 @@ function sfxWinner(force){
   if (musAudio && MUS.on) { const v = MUS.vol / 100; musAudio.volume = v * .3; setTimeout(() => { if (musAudio) musAudio.volume = MUS.vol / 100; }, 7000); }
 }
 
+/* ---------- Game-show sound effects (host screen only) ----------
+   Cash register: the correct answer is revealed and someone scored.
+   Shake-up: the leaderboard has a new leader, or a player jumps 3+ places.
+   Golf clap: polite applause on a leaderboard where nothing much changed. */
+function sweepNoise(ctx, dest, nb, t, {f1=300, f2=3000, dur=.5, peak=.3, q=1}={}){
+  const src = ctx.createBufferSource(); src.buffer = nb; const fl = ctx.createBiquadFilter(); fl.type = 'bandpass'; fl.Q.value = q;
+  fl.frequency.setValueAtTime(f1, t); fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + dur * .85); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + .06);
+  src.connect(fl); fl.connect(g); g.connect(dest); src.start(t, Math.random()); src.stop(t + dur + .1);
+}
+function kaChing(ctx, dest, t){
+  const nb = noiseBuf(ctx);
+  // two key clacks and the drawer thunk
+  noiseHit(ctx, dest, nb, t, {f:2400, q:4, peak:.45, dec:.03});
+  tone(ctx, dest, t, 170, {peak:.28, dec:.07});
+  noiseHit(ctx, dest, nb, t + .06, {f:2000, q:4, peak:.38, dec:.03});
+  // drawer slides open
+  sweepNoise(ctx, dest, nb, t + .09, {f1:500, f2:1600, dur:.1, peak:.22, q:1});
+  // the bell: "ching!"
+  [[1, .24], [2.76, .1], [5.4, .05], [1.5, .06]].forEach(([m, p]) => tone(ctx, dest, t + .16, 2093 * m, {peak:p, a:.002, dec:1.1}));
+  // coins settling
+  [.32, .38, .45, .5].forEach((d, i) => tone(ctx, dest, t + d, [3520, 4186, 3729, 4699][i], {type:'triangle', peak:.05, a:.001, dec:.12}));
+}
+function shakeUp(ctx, dest, t){
+  const nb = noiseBuf(ctx);
+  // rising whoosh, then a record scratch
+  sweepNoise(ctx, dest, nb, t, {f1:250, f2:3500, dur:.45, peak:.35, q:.9});
+  tone(ctx, dest, t + .42, 900, {type:'sawtooth', peak:.07, a:.005, dec:.12, f2:250});
+  noiseHit(ctx, dest, nb, t + .42, {f:1400, q:2, peak:.18, dec:.1});
+  // "dun-dun-DUN!": two drum hits and a brass stab
+  const h = t + .62;
+  [[0, 196], [.18, 185]].forEach(([d, f]) => { tone(ctx, dest, h + d, 110, {peak:.45, dec:.25, f2:55}); brass(ctx, dest, h + d, f, .1, .08); });
+  tone(ctx, dest, h + .42, 98, {peak:.6, dec:.6, f2:40});
+  noiseHit(ctx, dest, nb, h + .42, {type:'highpass', f:5000, q:.4, peak:.25, dec:1.2, dur:1.4});
+  [174.6, 233.1, 277.2].forEach(f => brass(ctx, dest, h + .42, f, .55, .07));
+}
+function golfClap(ctx, dest, t){
+  const nb = noiseBuf(ctx);
+  // three polite people, slightly out of time, clapping softly and fading
+  [[0, 1500, .47], [.11, 1900, .53], [.23, 1250, .5]].forEach(([d, f, gap]) => {
+    for (let i = 0; i < 6; i++) {
+      const at = t + d + i * gap + (Math.random() - .5) * .04, fade = 1 - i / 7;
+      noiseHit(ctx, dest, nb, at, {f:f + Math.random() * 300, q:1.4, peak:.32 * fade, dec:.045});
+      noiseHit(ctx, dest, nb, at + .004, {type:'highpass', f:3000, q:.5, peak:.08 * fade, dec:.02});
+    }
+  });
+}
+const SFX_KINDS = {kaching:kaChing, shake:shakeUp, golf:golfClap};
+/* Real recordings (public domain, from Wikimedia Commons: "Cash register.ogg" and "Applause i.ogg"), trimmed.
+   They load when a game starts; until they have loaded, the drawn sounds above play instead. */
+const SFX_FILES = {kaching:'sfx/cash-register.m4a', golf:'sfx/applause.m4a'}, SFX_BUF = {};
+function sfxLoad(ctx){
+  for (const k in SFX_FILES) {
+    if (SFX_BUF[k] !== undefined) continue; SFX_BUF[k] = null;
+    fetch(SFX_FILES[k]).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+      .then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .then(buf => { SFX_BUF[k] = buf; }).catch(() => { delete SFX_BUF[k]; });
+  }
+}
+function sfxPlay(kind){
+  if (!MUS.sfxOn || ROLE !== 'host' || !SFX_KINDS[kind]) return;
+  const ctx = sfxUnlock(); if (!ctx) return; sfxLoad(ctx);
+  if (SFX_BUF[kind]) { const src = ctx.createBufferSource(); src.buffer = SFX_BUF[kind]; src.connect(sfxOut); src.start(ctx.currentTime + .03); return; }
+  SFX_KINDS[kind](ctx, sfxOut, ctx.currentTime + .05);
+}
+/* Chosen when the host screen changes phase. */
+function phaseSfx(){
+  if (S.phase === 'reveal') {
+    if (S.players.some(p => S.results[p.id] && S.results[p.id].pts > 0)) sfxPlay('kaching');
+  } else if (S.phase === 'leaderboard') {
+    const r = ranked();
+    const shake = S.qi > 0 && r.length > 1 && (
+      (r[0].prevRank && r[0].prevRank !== 1) ||
+      r.slice(0, 5).some((p, i) => p.prevRank && p.prevRank - (i + 1) >= 3));
+    sfxPlay(shake ? 'shake' : 'golf');
+  }
+}
+
 /* =========================================================
    STATE
    ========================================================= */
@@ -2356,7 +2434,7 @@ const SS = {joined:false, pin:'', room:null, err:'', busy:false, ended:false, re
    ========================================================= */
 /* ---------- Automatic updates ----------
    APP_VERSION must match live/version.json; bump both every time the game is published. */
-const APP_VERSION = '2026-11-26a';
+const APP_VERSION = '2026-11-26b';
 let NEW_VERSION = null;
 async function checkVersion(){
   if (location.protocol === 'file:') return;
@@ -2699,6 +2777,7 @@ function renderHost(){
   const key = S.phase + ':' + S.qi;
   if (S.phase !== 'lobby') shownChips.clear();
   if (S.phase === 'podium' && key !== lastHostPhase) sfxWinner();
+  else if (key !== lastHostPhase) phaseSfx();
   $('#host').classList.toggle('still', key === lastHostPhase); lastHostPhase = key;
   $('#host').innerHTML = v() + (S.confirmEnd ? endDialog() : '');
   if (S.phase === 'lobby') S.players.forEach(p => shownChips.add(p.id));
@@ -2869,6 +2948,7 @@ function buildQuestions(){
 }
 
 function startGame(){
+  try { const c = sfxUnlock(); if (c) sfxLoad(c); } catch (e) {}
   S.played = 0; S.confirmEnd = false;
   if (S.live && S.room) { NET.remove(`${S.room}/answers`).catch(() => {}); NET.remove(`${S.room}/scores`).catch(() => {}); }
   S.questions = buildQuestions(); S.qi = 0;
